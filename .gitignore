@@ -3,3 +3,6 @@
 *.png
 *.log
 **/build
+
+raw_pdb.txt
+pdb_lengths.txt

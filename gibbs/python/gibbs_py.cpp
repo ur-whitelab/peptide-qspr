@@ -1,5 +1,7 @@
 #include "gibbs_py.h"
 #include <string>
+#include <vector>
+#include <boost/foreach.hpp>
 
 namespace bpy = boost::python;
 using namespace Gibbs;
@@ -116,5 +118,22 @@ Gibbs_Py::~Gibbs_Py(){
   }
   if(_motif_dists){
     delete [] _motif_dists;    
+  }
+
+  std::pair<int, int**> item;
+  std::vector<int> delete_keys;
+  BOOST_FOREACH(item, _peptides){
+    delete_keys.push_back(item.first);
+  }
+    
+  int key, length, i, j;
+
+  for( i = 0; i < delete_keys.size(); i++){
+    key = delete_keys[i];
+    length = sizeof(_peptides[key])/sizeof(int*);
+    for( j = 0; j < length; j++){
+	delete [] _motif_start_dists_map[key][j];
+	delete [] _motif_class_dists_map[key][j];
+    }
   }
 }

@@ -30,6 +30,13 @@ char const * Gibbs_Py::test_print(){
   else{
     return("INCORRECT FIRST FIRST ENTRY");
     }*/
+  double test_val = get_tot_prob(_peptides[5][0], _bg_dist, _motif_dists, _motif_class_dists_map[5][0], _motif_start_dists_map[5][0], 0, 0);
+  if(test_val - 5.0 < 0.000001){
+    return("SUCCESS");
+  }
+  else{
+    return("FAILURE");
+  }
   return("This is a test.");
 }
 
@@ -41,7 +48,7 @@ double Gibbs_Py::Gibbs_Py::get_tot_prob(int* peptide,
 					int motif_class,
 					int motif_start){
   //these are all internal variables that will be used; don't call this from python.
-  double prob = 0.0;
+  double prob = 5.0;
   
   return(prob);
 }

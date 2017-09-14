@@ -66,7 +66,7 @@ def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_c
     if motif_start is not None:#use set start position
         if motif_class is not None:#use set class value
             for i in range(length):#loop over all AA
-                for j in range(length - MOTIF_LENGTH):
+                for j in range(length - MOTIF_LENGTH + 1):
                     for k in range(NUM_MOTIF_CLASSES):
                 #we know where the motif is
                         if(i < motif_start or i >= motif_start + MOTIF_LENGTH):#\geq because of indexing
@@ -75,7 +75,7 @@ def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_c
                             prob += motif_dists[motif_class][ i - motif_start][peptide[i]] * start_dist[j] * class_dist[motif_class]
         else:#motif_class is None -> use distros
             for i in range(length):
-                for j in range(length - MOTIF_LENGTH):
+                for j in range(length - MOTIF_LENGTH + 1):
                     for k in range(NUM_MOTIF_CLASSES):
                         if(i < motif_start or i >= motif_start + MOTIF_LENGTH):#not in a motif
                             prob += bg_dist[peptide[i]]* start_dist[j] * class_dist[k]
@@ -150,7 +150,7 @@ for key in apd_data.keys():
     motif_counts[key] = np.zeros((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET)))
 
 
-bg_dist = np.zeros(len(ALPHABET))
+bg_dist = np.ones(len(ALPHABET))/float(20)
 #distributions not tracked by peptide, just length.
 motif_start_dists = {}
 motif_class_dists = {}

@@ -134,6 +134,7 @@ void Gibbs_Py::update_bg_dist(){
   for (int i = 0; i < ALPHABET_LENGTH; i++){
     bg_count_sum += _local_bg_counts[i];
   }
+  //keep it normalized
   for (int i = 0; i < ALPHABET_LENGTH; i++){
     _bg_dist[i] = double(_local_bg_counts[i])/double(bg_count_sum);
   }
@@ -145,14 +146,23 @@ void Gibbs_Py::run(){
    * The main loop is embodied here. After calling run(), we must then pass all
    * the altered distros back to the python side of things with convert()
    */
-  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class, value;
+  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class;
+  double motif_dists_sum;
   int* pep;
   int* test = new int[_motif_length];
   std::vector<int> possible_starts;
   for(step = 0; step < _num_iters; step++){
     //loop over keys
+    motif_dists_sum = 0;
     for (i_key = 0; i_key < bpy::len(_keys); i_key++){
       key = bpy::extract<int>(_keys[i_key]);
+      for(i = 0; i < _num_motif_classes; i++){
+	for(j = 0; j < _motif_length; j++){
+	  for(k = 0; k < ALPHABET_LENGTH; k++){
+	    _motif_counts_map[key][i][j][k] = 0;
+	  }
+	}
+      }
       //loop over all peptides of that length
       for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
 	pep = _peptides[key][i];
@@ -164,9 +174,76 @@ void Gibbs_Py::run(){
 	update_bg_dist();
 	motif_class = random_choice(_num_motif_classes, _motif_class_dists_map[key][i]);
 	for (j = 0; j < _motif_length; j++){
-	  value = pep[j+motif_start];
-	  test = _motif_counts_map[key][motif_class][j];
 	  _motif_counts_map[key][motif_class][j][pep[j+motif_start]] += 1;
+	  _motif_dists[motif_class][j][pep[j+motif_start]] += 1;
+	}//j
+      }//i
+    }//i_key
+    //NORMALIZE MOTIF DISTROS
+    for(i = 0; i < _num_motif_classes; i++){
+      for(j = 0; j < _motif_length; j++){
+	motif_dists_sum = 0;
+	for(k = 0; k < ALPHABET_LENGTH; k++){
+	  motif_dists_sum += _motif_dists[i][j][k];
+	}//k
+	for(k = 0; k < ALPHABET_LENGTH; k++){
+	  _motif_dists[i][j][k] /= motif_dists_sum;
+	}//k
+      }//j
+    }//i
+    for (i_key = 0; i_key < bpy::len(_keys); i_key++){
+      key = bpy::extract<int>(_keys[i_key]);
+      for(i = 0; i < bpy::len(_motif_start_dists[key]); i++){
+	for(j = 0; j < bpy::len(_motif_start_dists[key][i]); j++){
+	  _motif_start_dists_map[key][i][j] += get_tot_prob(
+	    _peptides[key][i], key, _bg_dist, _motif_dists, _motif_class_dists_map[key][i],
+	    _motif_start_dists_map[key][i], j, -1
+	    );
+	}//j
+      }//i
+    }//i_key
+    for (i_key = 0; i_key < bpy::len(_keys); i_key++){
+      key = bpy::extract<int>(_keys[i_key]);
+      motif_dists_sum = 0;
+      for(i = 0; i < bpy::len(_motif_start_dists[key]); i++){
+	for(j = 0; j < bpy::len(_motif_start_dists[key][i]); j++){
+	  motif_dists_sum += _motif_start_dists_map[key][i][j];
+	}
+	for(j = 0; j < bpy::len(_motif_start_dists[key][i]); j++){
+	  _motif_start_dists_map[key][i][j] /= motif_dists_sum;
+	}//j
+      }//i
+    }//i_key
+    for (i_key = 0; i_key < bpy::len(_keys); i_key++){
+      key = bpy::extract<int>(_keys[i_key]);
+      for(i = 0; i < bpy::len(_motif_class_dists[key]); i++){
+	for(j = 0; j < bpy::len(_motif_class_dists[key][i]); j++){
+	  for(k = 0; k < (key - _motif_length +1); k++){
+	    _motif_class_dists_map[key][i][j] += get_tot_prob(
+	      _peptides[key][i], key, _bg_dist, _motif_dists,
+	      _motif_class_dists_map[key][i], _motif_start_dists_map[key][i], j, k
+	      );
+	  }//k
+	}//j
+      }//i
+      for(i = 0; i < bpy::len(_motif_class_dists[key]); i++){
+	motif_dists_sum = 0;
+	for(j = 0; j < bpy::len(_motif_class_dists[key][i]); j++){
+	  motif_dists_sum += _motif_class_dists_map[key][i][j];
+	}
+	for(j = 0; j < bpy::len(_motif_class_dists[key][i]); j++){
+	  _motif_class_dists_map[key][i][j] /= motif_dists_sum;
+	}
+      }
+    }//i_key
+  }//step
+  //now that it's all done, return the distros!
+  for (i_key = 0; i_key < bpy::len(_keys); i_key++){
+    key = bpy::extract<int>(_keys[i_key]);
+    for(i = 0; i < _num_motif_classes; i++){
+      for(j = 0; j < _motif_length; j++){
+	for(k = 0; k < ALPHABET_LENGTH; k++){//this is borked
+//	  _other_motif_dists[key][i][j][k] = _motif_dists[key][i][j][k];
 	}
       }
     }
@@ -261,6 +338,7 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
 		   bpy::dict motif_counts,
 		   bpy::dict motif_start_dists,
 		   bpy::dict motif_class_dists,
+		   bpy::dict motif_dists,
 		   bpy::list bg_counts,
 		   bpy::list tot_bg_counts,
 		   int num_iters,
@@ -271,6 +349,7 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   _peptides_dict = training_peptides;
   _motif_start_dists = motif_start_dists;
   _motif_class_dists = motif_class_dists;
+  _other_motif_dists = motif_dists;
   _bg_counts = bg_counts;
   _tot_bg_counts = tot_bg_counts;
   _num_iters = num_iters;

@@ -207,11 +207,10 @@ for _ in range(NRUNS):
             for j in range(MOTIF_LENGTH):
                 motif_dists[motif_class][j] += motif_counts[key][motif_class][j] 
     #normalize the distros at the END
-    for key in apd_data.keys():
-        for j in range(NUM_MOTIF_CLASSES):
-            for k in range(MOTIF_LENGTH):
-                #motif_dists[j][k] += float(len(ALPHABET))
-                motif_dists[j][k] /= np.sum(motif_dists[j][k])
+    for i in range(NUM_MOTIF_CLASSES):
+        for j in range(MOTIF_LENGTH):
+            #motif_dists[j][k] += float(len(ALPHABET))
+            motif_dists[i][j] /= np.sum(motif_dists[i][j])
     #bg_dist /= np.sum(bg_dist)
     #now update the start probs based on observations...
     for key in apd_data.keys():#loop over all peps
@@ -227,7 +226,7 @@ for _ in range(NRUNS):
             #motif_start_dists[key][i] += float(len(motif_start_dists[key][i])) #add some 'noise'
             motif_start_dists[key][i] /= np.sum(motif_start_dists[key][i])
     #now update the motif class probs based on observations
-    for key in apd_data.keys():
+    for key in apd_data.keys():#TRANSLATED UP TO HERE
         #motif_class_dists[key] -= motif_class_dists[key]#zero out
         for i in range(len(motif_class_dists[key])):
             for j in range(len(motif_class_dists[key][i])):

@@ -19,6 +19,7 @@ namespace Gibbs{
     bpy::dict _peptides_dict;
     bpy::dict _motif_start_dists;
     bpy::dict _motif_class_dists;
+    bpy::dict _other_motif_dists;
     bpy::list _bg_counts;
     bpy::list _tot_bg_counts;
     bpy::list _keys;
@@ -30,6 +31,7 @@ namespace Gibbs{
 	     bpy::dict motif_counts,
 	     bpy::dict motif_start_dists,
 	     bpy::dict motif_class_dists,
+	     bpy::dict motif_dists,
 	     bpy::list bg_counts,
 	     bpy::list tot_bg_counts,
 	     int num_iters,

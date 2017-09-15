@@ -54,6 +54,14 @@ char const * Gibbs_Py::test_print(){
   return("This is a test.");
 }
 
+void Gibbs_Py::time_get_tot_prob(int num_repeats, int idx){
+  double local_test_prob;
+  for(int i = 0; i < num_repeats; i++){
+    local_test_prob =   get_tot_prob(_peptides[5][idx], 5, _bg_dist, _motif_dists, _motif_class_dists_map[5][idx], _motif_start_dists_map[5][idx], -1, -1);
+  }
+  return;
+}
+
 char const* Gibbs_Py::test_get_tot_prob(double test_prob, int idx){
 //  double other_test_prob = bpy::extract<double>(test_prob);
   double local_test_prob = get_tot_prob(_peptides[5][idx], 5, _bg_dist, _motif_dists, _motif_class_dists_map[5][idx], _motif_start_dists_map[5][idx], -1, -1);
@@ -92,6 +100,22 @@ void Gibbs_Py::get_possible_starts(std::vector<int> & starts, int key){
   return;
 }
 
+char const* Gibbs_Py::test_random_choice(int num_choices){
+  double* weights = new double[num_choices];
+  int i;
+  for(i = 0; i < num_choices; i++){
+    weights[i] = double(i) / double(num_choices);
+  }
+  int choice = random_choice(num_choices, weights);
+  if(choice > -1 and choice < num_choices){
+    return("SUCCESS");
+  }
+  else{
+    return("UH OH");
+  }
+  delete [] weights;
+}
+
 int Gibbs_Py::random_choice(int num_choices, double* weights){
   //expects that the weights are normalized
   boost::uniform_01<boost::mt19937> zero_one(_rng);
@@ -121,8 +145,9 @@ void Gibbs_Py::run(){
    * The main loop is embodied here. After calling run(), we must then pass all
    * the altered distros back to the python side of things with convert()
    */
-  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class;
+  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class, value;
   int* pep;
+  int* test = new int[_motif_length];
   std::vector<int> possible_starts;
   for(step = 0; step < _num_iters; step++){
     //loop over keys
@@ -139,7 +164,9 @@ void Gibbs_Py::run(){
 	update_bg_dist();
 	motif_class = random_choice(_num_motif_classes, _motif_class_dists_map[key][i]);
 	for (j = 0; j < _motif_length; j++){
-	  _motif_counts[key][motif_class][j][pep[j+motif_start]] += 1;
+	  value = pep[j+motif_start];
+	  test = _motif_counts_map[key][motif_class][j];
+	  _motif_counts_map[key][motif_class][j][pep[j+motif_start]] += 1;
 	}
       }
     }
@@ -254,7 +281,7 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   _motif_dists = new double**[_num_motif_classes];
 
   _keys = training_peptides.keys();
-  int key, length, i, j, k;
+  int key, length, i, j, k, h;
 
   _rng = boost::random::mt19937(rng_seed);
 
@@ -297,8 +324,11 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
       _motif_class_dists_map[key][j] = new double[_num_motif_classes];
       if(j < num_motif_classes){
 	_motif_counts_map[key][j] = new int*[_motif_length];
-	for(k = 0; k < _num_motif_classes; k++){
+	for(k = 0; k < _motif_length; k++){
 	  _motif_counts_map[key][j][k] = new int[ALPHABET_LENGTH];
+	  for(h = 0; h < ALPHABET_LENGTH; h++){
+	    _motif_counts_map[key][j][k][h] = 0;
+	  }
 	}
       }
       for( k = 0; k < key - _motif_length +1; k++){

@@ -2,7 +2,7 @@
 #define GIBBS_PY_H_
 
 #define ALPHABET_LENGTH 20
-#define EPSILON 0.00001
+#define EPSILON 0.0001
 
 #include <boost/python.hpp>
 #include <boost/random.hpp>
@@ -43,6 +43,8 @@ namespace Gibbs{
     char const* test_print();//for testing
     char const* test_get_tot_prob(double test_prob, int idx);
     char const* test_rng(double test_random);
+    char const* test_random_choice(int num_choices);
+    void time_get_tot_prob(int num_repeats, int idx);
 
     void run();//runs through the number of steps passed in at creation
 

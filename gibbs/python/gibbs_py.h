@@ -19,7 +19,7 @@ namespace Gibbs{
     bpy::dict _peptides_dict;
     bpy::dict _motif_start_dists;
     bpy::dict _motif_class_dists;
-    bpy::dict _other_motif_dists;
+    bpy::list _other_motif_dists;
     bpy::list _bg_counts;
     bpy::list _tot_bg_counts;
     bpy::list _keys;
@@ -31,7 +31,7 @@ namespace Gibbs{
 	     bpy::dict motif_counts,
 	     bpy::dict motif_start_dists,
 	     bpy::dict motif_class_dists,
-	     bpy::dict motif_dists,
+	     bpy::list motif_dists,
 	     bpy::list bg_counts,
 	     bpy::list tot_bg_counts,
 	     int num_iters,
@@ -45,10 +45,10 @@ namespace Gibbs{
     char const* test_print();//for testing
     char const* test_get_tot_prob(double test_prob, int idx);
     char const* test_rng(double test_random);
-    char const* test_random_choice(int num_choices);
+    int test_random_choice(int num_choices);
     void time_get_tot_prob(int num_repeats, int idx);
 
-    void run();//runs through the number of steps passed in at creation
+    bpy::list run();//runs through the number of steps passed in at creation
 
   private:
     double* _bg_dist;//background distro

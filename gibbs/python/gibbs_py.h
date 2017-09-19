@@ -43,12 +43,13 @@ namespace Gibbs{
     ~Gibbs_Py();//destroys dynamically allocated stuff
 
     char const* test_print();//for testing
-    char const* test_get_tot_prob(double test_prob, int idx);
-    char const* test_rng(double test_random);
+    bool test_peptide_transfer(int key, int idx, bpy::list other_pep);
+    bool test_get_tot_prob(double test_prob, int idx);
+    bool test_rng(double test_random);
     int test_random_choice(int num_choices);
     void time_get_tot_prob(int num_repeats, int idx);
 
-    bpy::list run();//runs through the number of steps passed in at creation
+    bpy::tuple run();//runs through the number of steps passed in at creation
 
   private:
     double* _bg_dist;//background distro

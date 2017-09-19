@@ -5,6 +5,18 @@
 namespace bpy = boost::python;
 using namespace Gibbs;
 
+bool Gibbs_Py::test_peptide_transfer(int key, int idx, bpy::list other_pep){
+  //take a key to the map and the idx of the peptide to test, and a bpy list
+  int i;
+  bool match = true;
+  for(i = 0; i < key; i++){
+    if(bpy::extract<int>(other_pep[i]) != _peptides[key][idx][i]){
+      match = false;
+    }
+  }
+  return(match);
+}
+
 char const * Gibbs_Py::test_print(){
   //a whole bunch of test cases. this is ad-hoc and bad
   /*if(_num_iters == 3000){
@@ -62,26 +74,26 @@ void Gibbs_Py::time_get_tot_prob(int num_repeats, int idx){
   return;
 }
 
-char const* Gibbs_Py::test_get_tot_prob(double test_prob, int idx){
+bool Gibbs_Py::test_get_tot_prob(double test_prob, int idx){
 //  double other_test_prob = bpy::extract<double>(test_prob);
+  bool passed = false;
   double local_test_prob = get_tot_prob(_peptides[5][idx], 5, _bg_dist, _motif_dists, _motif_class_dists_map[5][idx], _motif_start_dists_map[5][idx], -1, -1);
   if(abs(local_test_prob - test_prob) < EPSILON){
-    return("TEST PASSED");
+    passed = true;
   }
-  else{
-    return("TEST FAILED");
-  }
+  return(passed);
 }
 
-char const* Gibbs_Py::test_rng(double test_random){
+bool Gibbs_Py::test_rng(double test_random){
+  bool passed = false;
   static boost::uniform_01<boost::mt19937> zero_one(_rng);
   double local_random = zero_one();
   if(abs(local_random - test_random) < EPSILON){
-    return("TEST PASSED");
+    passed = true;
   }
-  else{
-    return("TEST FAILED");
-  }
+
+  return(passed);
+
 }
 
 void Gibbs_Py::do_bg_counts(int* peptide, int length, int start){
@@ -181,18 +193,29 @@ int Gibbs_Py::random_choice(int num_choices, double* weights){
 }
 
 void Gibbs_Py::update_bg_dist(){
-  int bg_count_sum = 0;
-  for (int i = 0; i < ALPHABET_LENGTH; i++){
-    bg_count_sum += _local_bg_counts[i];
-  }
+  double bg_dist_sum = 0.0;
   //keep it normalized
   for (int i = 0; i < ALPHABET_LENGTH; i++){
-    _bg_dist[i] = double(_local_bg_counts[i])/double(bg_count_sum);
+    _bg_dist[i] += double(_local_bg_counts[i]);
+  }
+  
+  for (int i = 0; i < ALPHABET_LENGTH; i++){
+    bg_dist_sum += _bg_dist[i];
+  }
+  while(abs(bg_dist_sum - 1.0) > 0.0001){
+    bg_dist_sum = 0.0;
+    for (int i = 0; i < ALPHABET_LENGTH; i++){
+      bg_dist_sum += _bg_dist[i];
+    }
+    for (int i = 0; i < ALPHABET_LENGTH; i++){
+      _bg_dist[i] /= bg_dist_sum;
+    }
+
   }
   return;
 }
 
-bpy::list Gibbs_Py::run(){
+bpy::tuple Gibbs_Py::run(){
   /*
    * The main loop is embodied here. After calling run(), we must then pass all
    * the altered distros back to the python side of things with convert()
@@ -200,7 +223,6 @@ bpy::list Gibbs_Py::run(){
   int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class;
   double motif_dists_sum;
   int* pep;
-  int* test = new int[_motif_length];
   std::vector<int> possible_starts;
   for(step = 0; step < _num_iters; step++){
     //loop over keys
@@ -217,7 +239,7 @@ bpy::list Gibbs_Py::run(){
       //loop over all peptides of that length
       for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
 	pep = _peptides[key][i];
-	poss_starts = (key - _motif_length);
+	poss_starts = (key - _motif_length +1);
 //	get_possible_starts(possible_starts, key);
 	//randomly choose motif start
 	motif_start = random_choice(poss_starts, _motif_start_dists_map[key][i]);
@@ -253,7 +275,7 @@ bpy::list Gibbs_Py::run(){
     for (i_key = 0; i_key < bpy::len(_keys); i_key++){
       key = bpy::extract<int>(_keys[i_key]);
       for(i = 0; i < bpy::len(_motif_start_dists[key]); i++){
-	for(j = 0; j < bpy::len(_motif_start_dists[key][i]); j++){
+	for(j = 0; j < (key - _motif_length+1); j++){
 	  _motif_start_dists_map[key][i][j] += get_tot_prob(
 	    _peptides[key][i], key, _bg_dist, _motif_dists, _motif_class_dists_map[key][i],
 	    _motif_start_dists_map[key][i], -1, j
@@ -264,10 +286,10 @@ bpy::list Gibbs_Py::run(){
 	motif_dists_sum = 0;
 	while(abs(1.0 - motif_dists_sum) > 0.0001 ){
 	  motif_dists_sum = 0;
-	  for(j = 0; j < bpy::len(_motif_start_dists[key][i]); j++){
+	  for(j = 0; j < (key - _motif_length +1); j++){
 	    motif_dists_sum += _motif_start_dists_map[key][i][j];
 	  }
-	  for(j = 0; j < bpy::len(_motif_start_dists[key][i]); j++){
+	  for(j = 0; j < (key - _motif_length+1); j++){
 	    _motif_start_dists_map[key][i][j] /= motif_dists_sum;
 	  }//j
 	}
@@ -276,7 +298,7 @@ bpy::list Gibbs_Py::run(){
     for (i_key = 0; i_key < bpy::len(_keys); i_key++){
       key = bpy::extract<int>(_keys[i_key]);
       for(i = 0; i < bpy::len(_motif_class_dists[key]); i++){
-	for(j = 0; j < bpy::len(_motif_class_dists[key][i]); j++){
+	for(j = 0; j < (_num_motif_classes); j++){
 	  for(k = 0; k < (key - _motif_length +1); k++){
 	    _motif_class_dists_map[key][i][j] += get_tot_prob(
 	      _peptides[key][i], key, _bg_dist, _motif_dists,
@@ -308,8 +330,19 @@ bpy::list Gibbs_Py::run(){
       }
     }
   }
-
-  return(_other_motif_dists);
+  for(i_key = 0; i_key < bpy::len(_keys); i_key++){
+    key = bpy::extract<int>(_keys[i_key]);
+    for(i = 0; i < bpy::len(_motif_start_dists[key]); i++){
+      for(j = 0; j < (key - _motif_length +1); j++){
+	_motif_start_dists[key][i][j] = _motif_start_dists_map[key][i][j];
+      }
+    }
+  }
+  bpy::list other_bg_dist;
+  for(i = 0; i < ALPHABET_LENGTH; i++){
+    other_bg_dist.append(_bg_dist[i]);
+  }
+  return(bpy::make_tuple(_other_motif_dists, other_bg_dist, _motif_start_dists ));
 }
 
 double Gibbs_Py::get_tot_prob(int* peptide,
@@ -326,7 +359,7 @@ double Gibbs_Py::get_tot_prob(int* peptide,
    * a double arr containing the background distro, a 3D arr of doubles containing
    * the motif distros, a double arr containing the class distro, a double arr 
    * containing the motif start distro, the current motif class (if applicable, else -1),
-   * and the current motif start position (if applicable, else -1). Returns the 'total'
+   * and the current motif start position (if applicable, else -1). Returns the 
    * un-normalized probability density assigned to this peptide with these params.
    */
   double prob = 0.0;
@@ -342,11 +375,11 @@ double Gibbs_Py::get_tot_prob(int* peptide,
 	    else{
 	      prob += motif_dists[motif_class][ i - motif_start][peptide[i]] * start_dist[j] * class_dist[motif_class];
 	    }
-	  }
-	}
-      }
-    }
-    else{//
+	  }//for k
+	}//for j
+      }//for i
+    }//if(motif_class >= 0)
+    else{//no motif class given, use distro
       for (i = 0; i < length; i++){
 	for (j = 0; j < (length - _motif_length + 1); j++){
 	  for (k = 0; k < _num_motif_classes; k++){
@@ -360,7 +393,7 @@ double Gibbs_Py::get_tot_prob(int* peptide,
 	}
       }
     }
-  }
+  }//if(motif_start >= 0)
   else{//use start_dist; no set value
     if ((motif_class >=0) ){//use set value for motif_class
       for (i = 0; i < length; i++){
@@ -372,10 +405,10 @@ double Gibbs_Py::get_tot_prob(int* peptide,
 	    else{//in a motif
 	      prob += motif_dists[motif_class][i - j][peptide[i]] * start_dist[j] * class_dist[k];
 	    }
-	  }
-	}
-      }
-    }
+	  }//for k
+	}//for j
+      }//for i
+    }//if(motif_class >= 0)
     else{
       for (i = 0; i < length; i++){
 	for (j = 0; j < (length - _motif_length + 1); j++){
@@ -386,12 +419,12 @@ double Gibbs_Py::get_tot_prob(int* peptide,
 	    else{//in a motif
 	      prob += motif_dists[k][i - j][peptide[i]] * start_dist[j] * class_dist[k];
 	    }
-	  }
-	}
-      }
+	  }//for k
+	}//for j
+      }//for i
     }
   }
-  
+  //get_tot_prob() is EQUIVALENT
   return(prob);
 }
 
@@ -493,7 +526,7 @@ Gibbs_Py::~Gibbs_Py(){
     delete [] _motif_dists;    
   }
 
-  int key, length, i, j, k;
+  int key, length, i, j;
 
   for( i = 0; i < bpy::len(_keys); i++){
     key = bpy::extract<int>(_keys[i]);

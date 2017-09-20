@@ -218,12 +218,14 @@ for _ in range(NRUNS):
         for i in range(len(motif_start_dists[key])):#loop over all AA in pep
             for j in range(len(motif_start_dists[key][i])):#loop over all possible start positions
                 #motif_start_dists[key][i][j] /= 2.0
-                motif_start_dists[key][i][j] += get_tot_prob(
-                    apd_data[key][i], bg_dist/np.sum(bg_dist),  motif_dists, motif_class_dists[key][i],
-                    motif_start_dists[key][i], motif_start = j, motif_class=None
-                )# * ETA#/2.0#would do motif_start_dists[key][i]
+                for k in range(NUM_MOTIF_CLASSES):
+                    motif_start_dists[key][i][j] += get_tot_prob(
+                        apd_data[key][i], bg_dist/np.sum(bg_dist),
+                        motif_dists, motif_class_dists[key][i],
+                        motif_start_dists[key][i], motif_start = j, motif_class=None
+                    )# * ETA#/2.0#would do motif_start_dists[key][i]
         for i in range(len(motif_start_dists[key])):
-            #motif_start_dists[key][i] += float(len(motif_start_dists[key][i])) #add some 'noise'
+            motif_start_dists[key][i] += 1.0#float(len(motif_start_dists[key][i])) #add some 'noise'
             motif_start_dists[key][i] /= np.sum(motif_start_dists[key][i])
     #now update the motif class probs based on observations
     for key in apd_data.keys():#TRANSLATED UP TO HERE
@@ -240,7 +242,7 @@ for _ in range(NRUNS):
         for i in range(len(motif_class_dists[key])):
             #motif_class_dists[key][i] += float(len(motif_class_dists[key][i]))
             motif_class_dists[key][i] /= np.sum(motif_class_dists[key][i])
-    #pdb.set_trace()
+
 
 
 #now get some fake data for performance analysis

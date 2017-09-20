@@ -59,10 +59,13 @@ namespace Gibbs{
     std::map<int, double**> _motif_class_dists_map;//the map of motif class distros
     std::map<int, int***> _motif_counts_map;//map to raw counts of AA occurrences
     std::map<int, int**> _peptides;
+    std::map<int, int> _counts;//keyed same as _peptides, counts number of each length
+    int _num_keys; //the number of different lenghts of peptide we have
+    double _temp_dist[ALPHABET_LENGTH];//for holding updates before applying,
+    //so get_tot_prob() works properly
 
     void do_bg_counts(int* peptide, int length, int start);
     void update_bg_dist();
-    void get_possible_starts(std::vector<int> & starts, int key);
     int random_choice(int num_choices, double* weights);
 
     boost::random::mt19937 _rng;

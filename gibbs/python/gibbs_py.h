@@ -67,6 +67,7 @@ namespace Gibbs{
     void do_bg_counts(int* peptide, int length, int start);
     void update_bg_dist();
     int random_choice(int num_choices, double* weights);
+    void clear_temp_dist();
 
     boost::random::mt19937 _rng;
 

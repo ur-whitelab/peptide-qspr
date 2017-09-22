@@ -37,7 +37,8 @@ namespace Gibbs{
 	     int num_iters,
 	     int motif_length,
 	     int num_motif_classes,
-	     int rng_seed);
+	     int rng_seed,
+	     int num_random_draws);
 //    Gibbs_Py(const Gibbs_Py& that);//disable copy constructor
 
     ~Gibbs_Py();//destroys dynamically allocated stuff
@@ -52,6 +53,7 @@ namespace Gibbs{
     bpy::tuple run();//runs through the number of steps passed in at creation
 
   private:
+    int _num_random_draws;
     double* _bg_dist;//background distro
     int* _local_bg_counts;//the internal background counts
     double***  _motif_dists;//the 3D array of motif distros

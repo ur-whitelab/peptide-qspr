@@ -169,19 +169,6 @@ int Gibbs_Py::random_choice(int num_choices, double* weights){
   static boost::uniform_01<boost::mt19937> zero_one(_rng);
   double sum;
   int i;
-  for( i =0; i < num_choices; i++){
-    sum += weights[i];
-  }
-  if(abs(1.0 - sum) > 0.0001){
-    for( i = 0; i < num_choices; i++){
-      weights[i] = weights[i] / sum;
-    }
-    sum = 0.0;
-    for( i =0; i < num_choices; i++){
-      sum += weights[i];
-    }
-
-  }
   double rando = zero_one();
   for( i = 0; i < num_choices; i++){
     if(rando < weights[i]){
@@ -220,8 +207,16 @@ bpy::tuple Gibbs_Py::run(){
    * The main loop is embodied here. After calling run(), we must then pass all
    * the altered distros back to the python side of things
    */
-  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class;
+  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class, random_idx;
   double motif_dists_sum;
+  double uniform_pep_dist[ALPHABET_LENGTH];
+  double uniform_motif_idx_dist[_motif_length];
+  for(i = 0; i < ALPHABET_LENGTH; i++){
+    uniform_pep_dist[i] = 1.0/double(ALPHABET_LENGTH);
+  }
+  for(i = 0; i < _motif_length; i++){
+    uniform_motif_idx_dist[i] = 1.0/_motif_length;
+  }
   int* pep;
   for(step = 0; step < _num_iters; step++){
     //loop over keys
@@ -248,6 +243,11 @@ bpy::tuple Gibbs_Py::run(){
 	  int aa = pep[j+motif_start];
 	  _motif_counts_map[key][motif_class][j][aa] += 1;
 	}//j
+	for(j = 0; j < _num_random_draws; j++){
+	  k = random_choice(_motif_length, uniform_motif_idx_dist);
+	  random_idx = random_choice(ALPHABET_LENGTH, uniform_pep_dist);
+	  _motif_counts_map[key][motif_class][k][random_idx] += 1;
+	}
 	for (j = 0; j < _motif_length; j++){
 	  for(k = 0; k < ALPHABET_LENGTH; k++){
 	    _motif_dists[motif_class][j][k] += _motif_counts_map[key][motif_class][j][k];
@@ -475,7 +475,9 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
 		   int num_iters,
 		   int motif_length,
   		   int num_motif_classes,
-		   int rng_seed){
+		   int rng_seed,
+		   int num_random_draws){
+  _num_random_draws = num_random_draws;
   _motif_counts = motif_counts;
   _peptides_dict = training_peptides;
   _motif_start_dists = motif_start_dists;

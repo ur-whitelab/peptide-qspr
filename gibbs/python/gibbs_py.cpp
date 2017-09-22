@@ -339,10 +339,26 @@ bpy::tuple Gibbs_Py::run(){
     }//i_key
   }//step
   //now that it's all done, return the distros!
+  //first, sort by expected value (alphabetical based on weights from dists)
+  std::vector<std::pair <double, int> > pairs;
+
+  for(i = 0; i < _num_motif_classes; i++){
+    motif_dists_sum = 0.0;
+    for(j = 0; j < _motif_length; j++){
+      for(k = 0; k < ALPHABET_LENGTH; k++){
+	motif_dists_sum += (_motif_dists[i][j][k] * double(k));//end up withthe expected value
+      }
+    }
+    pairs.push_back(std::make_pair(motif_dists_sum, i));//now we have pairs
+  }
+  std::sort(pairs.begin(), pairs.end());
+  
+  int order_idx;
   for(i = 0; i < _num_motif_classes; i++){
     for(j = 0; j < _motif_length; j++){
       for(k = 0; k < ALPHABET_LENGTH; k++){//this is borked
-	_other_motif_dists[i][j][k] = _motif_dists[i][j][k];
+	order_idx = pairs[i].second;//the sorted index to use
+	_other_motif_dists[i][j][k] = _motif_dists[order_idx][j][k];
       }
     }
   }

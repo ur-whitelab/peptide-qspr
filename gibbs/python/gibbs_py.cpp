@@ -1,6 +1,7 @@
 #include "gibbs_py.h"
 #include <string>
 #include <boost/foreach.hpp>
+#include <algorithm>
 
 namespace bpy = boost::python;
 using namespace Gibbs;
@@ -167,7 +168,6 @@ int Gibbs_Py::test_random_choice(int num_choices){
 int Gibbs_Py::random_choice(int num_choices, double* weights){
   //expects that the weights are normalized
   static boost::uniform_01<boost::mt19937> zero_one(_rng);
-  double sum;
   int i;
   double rando = zero_one();
   for( i = 0; i < num_choices; i++){
@@ -246,14 +246,14 @@ bpy::tuple Gibbs_Py::run(){
 	  count += 1;
 	}//j
 	//add random noise
-	for(j = 0; j < _num_random_draws; j++){
+/*	for(j = 0; j < _num_random_draws; j++){
 	  k = random_choice(_motif_length, uniform_motif_idx_dist);
 	  random_idx = random_choice(ALPHABET_LENGTH, uniform_pep_dist);
 	  _motif_counts_map[key][motif_class][k][random_idx] += 1;
-	}
+	  }*/
 	for (j = 0; j < _motif_length; j++){
 	  for(k = 0; k < ALPHABET_LENGTH; k++){
-	    _motif_dists[motif_class][j][k] += _motif_counts_map[key][motif_class][j][k];
+	    _motif_dists[motif_class][j][k] -= _eta * ( double(count) * ( double(count) * _motif_dists[motif_class][j][k] - double(_motif_counts_map[key][motif_class][j][k])/double(count)));//apply regularization
 	  }
 	}
       }//i
@@ -479,7 +479,9 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
 		   int motif_length,
   		   int num_motif_classes,
 		   int rng_seed,
-		   int num_random_draws){
+		   int num_random_draws,
+		   double eta){
+  _eta = eta;
   _num_random_draws = num_random_draws;
   _motif_counts = motif_counts;
   _peptides_dict = training_peptides;

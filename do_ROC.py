@@ -23,7 +23,7 @@ for i in range(2, int(num_clusters)+1):
     best_idx = 0
     old_dist = 2
     for j in range(1,len(fpr_arr)):
-        dist = math.sqrt(fpr_arr[j] **2 + (1-tpr_arr[j]) **2)
+        dist = math.sqrt(1.5 * fpr_arr[j] **2 + (1-tpr_arr[j]) **2)
         if(old_dist > dist):
             best_idx = j
             old_dist = dist

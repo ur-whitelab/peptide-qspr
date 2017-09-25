@@ -207,7 +207,7 @@ bpy::tuple Gibbs_Py::run(){
    * The main loop is embodied here. After calling run(), we must then pass all
    * the altered distros back to the python side of things
    */
-  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class, random_idx;
+  int i_key, key, i, j, k, step, poss_starts, motif_start, motif_class, random_idx, count;
   double motif_dists_sum;
   double uniform_pep_dist[ALPHABET_LENGTH];
   double uniform_motif_idx_dist[_motif_length];
@@ -224,15 +224,16 @@ bpy::tuple Gibbs_Py::run(){
     for (i_key = 0; i_key < _num_keys; i_key++){
       key = bpy::extract<int>(_keys[i_key]);
       poss_starts = (key - _motif_length +1);
-/*      for(i = 0; i < _num_motif_classes; i++){
+      for(i = 0; i < _num_motif_classes; i++){
 	for(j = 0; j < _motif_length; j++){
 	  for(k = 0; k < ALPHABET_LENGTH; k++){
 	    _motif_counts_map[key][i][j][k] = 0;
 	  }
 	}
-      }*/
+      }
       //loop over all peptides of that length
       for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
+	count = 0;//for the L1 regularization step
 	pep = _peptides[key][i];
 	//randomly choose motif start
 	motif_start = random_choice(poss_starts, _motif_start_dists_map[key][i]);
@@ -242,7 +243,9 @@ bpy::tuple Gibbs_Py::run(){
 	for (j = 0; j < _motif_length; j++){
 	  int aa = pep[j+motif_start];
 	  _motif_counts_map[key][motif_class][j][aa] += 1;
+	  count += 1;
 	}//j
+	//add random noise
 	for(j = 0; j < _num_random_draws; j++){
 	  k = random_choice(_motif_length, uniform_motif_idx_dist);
 	  random_idx = random_choice(ALPHABET_LENGTH, uniform_pep_dist);

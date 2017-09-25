@@ -3,6 +3,10 @@
 *.png
 *.log
 **/build
-
+**/gaussmix
+**/testing
+**/**/*.bins
+**/**/*.counts
 raw_pdb.txt
 pdb_lengths.txt
+APD_GPOS_SEQS_txt.txt

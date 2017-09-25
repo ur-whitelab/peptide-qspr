@@ -7,16 +7,19 @@ import pdb
 import sys
 
 def printhelp():
-    print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [learning_rate]")
+    print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [random_draws_per_step (default 0)]")
     exit(1)
 
-if len(sys.argv) != 5:
+if len(sys.argv) != 5 and len(sys.argv) != 4:
     printhelp()
 
 INPUT = sys.argv[1]
 NUM_MOTIF_CLASSES = int(sys.argv[2]) #one class for which letter the motif starts with? why not try
 NRUNS = int(sys.argv[3])
-ETA = float(sys.argv[4])
+if(len(sys.argv) == 5):
+    NUM_RANDOM_DRAWS = int(sys.argv[4])
+else:
+    NUM_RANDOM_DRAWS = 0
 
 
 #CONSTANTS

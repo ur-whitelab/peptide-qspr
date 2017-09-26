@@ -16,7 +16,7 @@ IF(Boost_FOUND)
   FIND_PACKAGE(Boost 1.58.0 COMPONENTS python-py35 REQUIRED)
 
   ADD_LIBRARY(gibbs SHARED gibbs_py.cxx gibbs_py.cpp)
-  SET_TARGET_PROPERTIES(gibbs PROPERTIES COMPILE_FLAGS "-I${PROJECT_SOURCE_DIR} -I/usr/include/boost/python" LINK_FLAGS "-I${PROJECT_SOURCE_DIR} -I/usr/include/boost/python")
+  SET_TARGET_PROPERTIES(gibbs PROPERTIES COMPILE_FLAGS "-I${PROJECT_SOURCE_DIR} -I/usr/include/boost/python -O3 -march=native -funroll-loops" LINK_FLAGS "-I${PROJECT_SOURCE_DIR} -I/usr/include/boost/python")
   TARGET_LINK_LIBRARIES(gibbs ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 ELSEIF(NOT Boost_FOUND)
   MESSAGE(FATAL_ERROR "Unable to find correct Boost version. Did you set BOOST_ROOT?")

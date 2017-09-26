@@ -254,7 +254,9 @@ bpy::tuple Gibbs_Py::run(){
 	for (j = 0; j < _motif_length; j++){
 	  for(k = 0; k < ALPHABET_LENGTH; k++){
 	    _eta = _horizon_param / sqrt(_grad_square_sums[motif_class][j][k]);
-	    _motif_dists[motif_class][j][k] -= _eta * ( double(count) * ( double(count) * _motif_dists[motif_class][j][k] - double(_motif_counts_map[key][motif_class][j][k])/double(count)));//apply regularization
+	    _gradient = ( double(count) * ( double(count) * _motif_dists[motif_class][j][k] - double(_motif_counts_map[key][motif_class][j][k])/double(count)) ) + _alpha;//apply regularization
+	    _motif_dists[motif_class][j][k] -= _eta * _gradient;
+	    _grad_square_sums[motif_class][j][k] += _gradient * _gradient;
 	  }
 	}
       }//i
@@ -480,7 +482,8 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
 		   int motif_length,
   		   int num_motif_classes,
 		   int rng_seed,
-		   int num_random_draws){
+		   int num_random_draws,
+		   double alpha){
   _eta = 1.0;
   _num_random_draws = num_random_draws;
   _motif_counts = motif_counts;
@@ -498,6 +501,8 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   _motif_dists = new double**[_num_motif_classes];
   _grad_square_sums = new double**[_num_motif_classes];
   _horizon_param = 0.005;//for now
+  _gradient = 0.0;
+  _alpha = alpha;
 
   _keys = training_peptides.keys();
   int key, length, i, j, k, h;

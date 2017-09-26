@@ -38,7 +38,8 @@ namespace Gibbs{
 	     int motif_length,
 	     int num_motif_classes,
 	     int rng_seed,
-	     int num_random_draws);
+	     int num_random_draws,
+	     double alpha);
 //    Gibbs_Py(const Gibbs_Py& that);//disable copy constructor
 
     ~Gibbs_Py();//destroys dynamically allocated stuff
@@ -55,6 +56,8 @@ namespace Gibbs{
   private:
     double _eta;//the learning rate
     double _horizon_param;//the constant prefactor for infinite-horizon SGD
+    double _gradient;//the gradient value
+    double _alpha;//the L1 regularization parameter
     int _num_random_draws;
     double* _bg_dist;//background distro
     int* _local_bg_counts;//the internal background counts

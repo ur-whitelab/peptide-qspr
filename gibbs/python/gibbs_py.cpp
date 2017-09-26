@@ -253,6 +253,7 @@ bpy::tuple Gibbs_Py::run(){
 	  }*/
 	for (j = 0; j < _motif_length; j++){
 	  for(k = 0; k < ALPHABET_LENGTH; k++){
+	    _eta = _horizon_param / sqrt(_grad_square_sums[motif_class][j][k]);
 	    _motif_dists[motif_class][j][k] -= _eta * ( double(count) * ( double(count) * _motif_dists[motif_class][j][k] - double(_motif_counts_map[key][motif_class][j][k])/double(count)));//apply regularization
 	  }
 	}
@@ -479,9 +480,8 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
 		   int motif_length,
   		   int num_motif_classes,
 		   int rng_seed,
-		   int num_random_draws,
-		   double eta){
-  _eta = eta;
+		   int num_random_draws){
+  _eta = 1.0;
   _num_random_draws = num_random_draws;
   _motif_counts = motif_counts;
   _peptides_dict = training_peptides;
@@ -496,6 +496,8 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   _local_bg_counts = new int[ALPHABET_LENGTH];
   _bg_dist = new double[ALPHABET_LENGTH];//the length of the alphabet
   _motif_dists = new double**[_num_motif_classes];
+  _grad_square_sums = new double**[_num_motif_classes];
+  _horizon_param = 0.005;//for now
 
   _keys = training_peptides.keys();
   int key, length, i, j, k, h;
@@ -524,10 +526,13 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
 
   for (i = 0; i < _num_motif_classes; i++){
     _motif_dists[i] = new double*[_motif_length];
+    _grad_square_sums[i] = new double*[_motif_length];
     for( j = 0; j < _motif_length; j++){
       _motif_dists[i][j] = new double[ALPHABET_LENGTH];
+      _grad_square_sums[i][j] = new double[ALPHABET_LENGTH];
       for(k = 0; k < ALPHABET_LENGTH; k++){
 	_motif_dists[i][j][k] = 1.0/double(ALPHABET_LENGTH);
+	_grad_square_sums[i][j][k] = 1.0;
       }
     }
   }

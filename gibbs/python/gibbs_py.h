@@ -38,8 +38,7 @@ namespace Gibbs{
 	     int motif_length,
 	     int num_motif_classes,
 	     int rng_seed,
-	     int num_random_draws,
-	     double eta);
+	     int num_random_draws);
 //    Gibbs_Py(const Gibbs_Py& that);//disable copy constructor
 
     ~Gibbs_Py();//destroys dynamically allocated stuff
@@ -55,10 +54,12 @@ namespace Gibbs{
 
   private:
     double _eta;//the learning rate
+    double _horizon_param;//the constant prefactor for infinite-horizon SGD
     int _num_random_draws;
     double* _bg_dist;//background distro
     int* _local_bg_counts;//the internal background counts
     double***  _motif_dists;//the 3D array of motif distros
+    double*** _grad_square_sums;//the 3D array used for updating eta
     std::map<int, double**> _motif_start_dists_map;
     std::map<int, double**> _motif_class_dists_map;//the map of motif class distros
     std::map<int, int***> _motif_counts_map;//map to raw counts of AA occurrences

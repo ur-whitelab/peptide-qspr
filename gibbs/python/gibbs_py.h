@@ -54,6 +54,7 @@ namespace Gibbs{
     bpy::tuple run();//runs through the number of steps passed in at creation
 
   private:
+    int i, j, k, i_key, h;
     std::map<int, int> _lengths;//maps keys to number of peps of that key
     double _eta;//the learning rate
     double _horizon_param;//the constant prefactor for infinite-horizon SGD

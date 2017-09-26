@@ -68,7 +68,7 @@ char const * Gibbs_Py::test_print(){
 }
 
 void Gibbs_Py::clear_temp_dist(){
-  for(int i = 0; i < ALPHABET_LENGTH; i++){
+  for(i = 0; i < ALPHABET_LENGTH; i++){
     _temp_dist[i] = 0.0;
   }
   return;
@@ -76,7 +76,7 @@ void Gibbs_Py::clear_temp_dist(){
 
 void Gibbs_Py::time_get_tot_prob(int num_repeats, int idx){
   double local_test_prob;
-  for(int i = 0; i < num_repeats; i++){
+  for(i = 0; i < num_repeats; i++){
     local_test_prob =   get_tot_prob(_peptides[5][idx], 5, _bg_dist, _motif_dists, _motif_class_dists_map[5][idx], _motif_start_dists_map[5][idx], -1, -1);
   }
   return;
@@ -105,7 +105,7 @@ bool Gibbs_Py::test_rng(double test_random){
 }
 
 void Gibbs_Py::do_bg_counts(int* peptide, int length, int start){
-  for(int i = 0; i < length; i++){
+  for(i = 0; i < length; i++){
     if (i < start or i >= (_motif_length + start) ){
       _local_bg_counts[peptide[i]]++;
     }
@@ -114,7 +114,7 @@ void Gibbs_Py::do_bg_counts(int* peptide, int length, int start){
 
 int Gibbs_Py::test_random_choice(int num_choices){
   double* weights = new double[num_choices];
-  int i, choice;
+  int choice;
   if(num_choices == 5){
     //special case of test
     for(i = 0; i < num_choices; i++){
@@ -168,7 +168,6 @@ int Gibbs_Py::test_random_choice(int num_choices){
 int Gibbs_Py::random_choice(int num_choices, double* weights){
   //expects that the weights are normalized
   static boost::uniform_01<boost::mt19937> zero_one(_rng);
-  int i;
   double rando = zero_one();
   for( i = 0; i < num_choices; i++){
     if(rando < weights[i]){
@@ -407,7 +406,7 @@ double Gibbs_Py::get_tot_prob(int* peptide,
    * un-normalized probability density assigned to this peptide with these params.
    */
   double prob = 0.0;
-  int i, j, k;
+//  int i, j, k;
   if((motif_start >= 0) ){//use set value for motif_start
     if((motif_class >=0)){//use set value for motif_class
       for (i = 0; i < length; i++){
@@ -468,7 +467,6 @@ double Gibbs_Py::get_tot_prob(int* peptide,
       }//for i
     }
   }
-  //get_tot_prob() is EQUIVALENT
   return(prob);
 }
 
@@ -507,7 +505,7 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   _keys_list = training_peptides.keys();
   _keys = new int[bpy::len(_keys_list)];
 
-  int key, length, i, j, k, h;
+  int key, length;
 
   _rng = boost::random::mt19937(rng_seed);
 

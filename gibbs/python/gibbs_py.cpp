@@ -246,11 +246,12 @@ bpy::tuple Gibbs_Py::run(){
 	  count += 1;
 	}//j
 	//add random noise
-/*	for(j = 0; j < _num_random_draws; j++){
+	for(j = 0; j < _num_random_draws; j++){
 	  k = random_choice(_motif_length, uniform_motif_idx_dist);
 	  random_idx = random_choice(ALPHABET_LENGTH, uniform_pep_dist);
 	  _motif_counts_map[key][motif_class][k][random_idx] += 1;
-	  }*/
+	  count += 1;
+	  }
 	for (j = 0; j < _motif_length; j++){
 	  for(k = 0; k < ALPHABET_LENGTH; k++){
 	    _eta = _horizon_param / sqrt(_grad_square_sums[motif_class][j][k]);

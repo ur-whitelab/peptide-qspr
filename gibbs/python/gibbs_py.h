@@ -22,7 +22,7 @@ namespace Gibbs{
     bpy::list _other_motif_dists;
     bpy::list _bg_counts;
     bpy::list _tot_bg_counts;
-    bpy::list _keys;
+    bpy::list _keys_list;
     int _num_iters;
     int _motif_length;
     int _num_motif_classes;
@@ -54,6 +54,7 @@ namespace Gibbs{
     bpy::tuple run();//runs through the number of steps passed in at creation
 
   private:
+    std::map<int, int> _lengths;//maps keys to number of peps of that key
     double _eta;//the learning rate
     double _horizon_param;//the constant prefactor for infinite-horizon SGD
     double _gradient;//the gradient value
@@ -69,6 +70,7 @@ namespace Gibbs{
     std::map<int, int**> _peptides;
     std::map<int, int> _counts;//keyed same as _peptides, counts number of each length
     int _num_keys; //the number of different lenghts of peptide we have
+    int* _keys;
     double _temp_dist[ALPHABET_LENGTH];//for holding updates before applying,
     //so get_tot_prob() works properly
 

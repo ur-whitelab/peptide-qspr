@@ -222,7 +222,7 @@ bpy::tuple Gibbs_Py::run(){
     //loop over keys
     motif_dists_sum = 0;
     for (i_key = 0; i_key < _num_keys; i_key++){
-      key = bpy::extract<int>(_keys[i_key]);
+      key = (_keys[i_key]);
       poss_starts = (key - _motif_length +1);
       for(i = 0; i < _num_motif_classes; i++){
 	for(j = 0; j < _motif_length; j++){
@@ -232,7 +232,7 @@ bpy::tuple Gibbs_Py::run(){
 	}
       }
       //loop over all peptides of that length
-      for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
+      for(i = 0; i < _lengths[key]; i++){
 	count = 0;//for the L1 regularization step
 	pep = _peptides[key][i];
 	//randomly choose motif start
@@ -256,7 +256,7 @@ bpy::tuple Gibbs_Py::run(){
 	  for(k = 0; k < ALPHABET_LENGTH; k++){
 	    _eta = _horizon_param / sqrt(_grad_square_sums[motif_class][j][k]);
 	    _gradient = ( double(count) * ( double(count) * _motif_dists[motif_class][j][k] - double(_motif_counts_map[key][motif_class][j][k])/double(count)) ) + _alpha;//apply regularization
-	    _motif_dists[motif_class][j][k] -= _eta * _gradient;
+	    _motif_dists[motif_class][j][k] -= (_eta * _gradient > _motif_dists[motif_class][j][k] ? _motif_dists[motif_class][j][k]: _eta * _gradient );
 	    _grad_square_sums[motif_class][j][k] += _gradient * _gradient;
 	  }
 	}
@@ -279,9 +279,9 @@ bpy::tuple Gibbs_Py::run(){
       }//j
     }//i
     for (i_key = 0; i_key < _num_keys; i_key++){
-      key = bpy::extract<int>(_keys[i_key]);
+      key = (_keys[i_key]);
       poss_starts = (key - _motif_length +1);
-      for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
+      for(i = 0; i < _lengths[key]; i++){
 	clear_temp_dist();
 	for(j = 0; j < poss_starts ; j++){
 	  for(k = 0; k < _num_motif_classes; k++){
@@ -298,9 +298,9 @@ bpy::tuple Gibbs_Py::run(){
       }//i
     }//i_key
     for (i_key = 0; i_key < _num_keys; i_key++){
-      key = bpy::extract<int>(_keys[i_key]);
+      key = (_keys[i_key]);
       poss_starts = (key - _motif_length+1);
-      for(i = 0; i < bpy::len(_motif_class_dists[key]); i++){
+      for(i = 0; i < (_lengths[key]); i++){
 	motif_dists_sum = 0;
 	if(abs(1.0 - motif_dists_sum) > 0.0001 ){
 	  motif_dists_sum = 0;
@@ -314,9 +314,9 @@ bpy::tuple Gibbs_Py::run(){
       }//i
     }
     for (i_key = 0; i_key < _num_keys; i_key++){
-      key = bpy::extract<int>(_keys[i_key]);
+      key = (_keys[i_key]);
       poss_starts = (key - _motif_length +1);
-      for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
+      for(i = 0; i < _lengths[key]; i++){
 	clear_temp_dist();
 	for(j = 0; j < (_num_motif_classes); j++){
 	  for(k = 0; k < (poss_starts); k++){
@@ -330,14 +330,14 @@ bpy::tuple Gibbs_Py::run(){
 	  _motif_class_dists_map[key][i][j] += _temp_dist[j];
 	}
       }//i
-      for(i = 0; i < bpy::len(_motif_class_dists[key]); i++){
+      for(i = 0; i < (_lengths[key]); i++){
 	motif_dists_sum = 0;
 	if(abs(1.0 - motif_dists_sum) > 0.00001){
 	  motif_dists_sum = 0;
 	  for(j = 0; j < _num_motif_classes; j++){
 	    motif_dists_sum += _motif_class_dists_map[key][i][j];
 	  }
-	  for(j = 0; j < bpy::len(_motif_class_dists[key][i]); j++){
+	  for(j = 0; j < _num_motif_classes; j++){
 	    _motif_class_dists_map[key][i][j] /= motif_dists_sum;
 	  }
 
@@ -370,13 +370,13 @@ bpy::tuple Gibbs_Py::run(){
     }
   }
   for(i_key = 0; i_key < _num_keys; i_key++){
-    key = bpy::extract<int>(_keys[i_key]);
-    for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
+    key = (_keys[i_key]);
+    for(i = 0; i < _lengths[key]; i++){
       for(j = 0; j < (key - _motif_length +1); j++){
 	_motif_start_dists[key][i][j] = _motif_start_dists_map[key][i][j];
       }
     }
-    for(i = 0; i < bpy::len(_peptides_dict[key]); i++){
+    for(i = 0; i < _lengths[key]; i++){
       for(j = 0; j < (_num_motif_classes); j++){
 	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][i][j];
       }
@@ -504,13 +504,18 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   _horizon_param = 0.005;//for now
   _gradient = 0.0;
   _alpha = alpha;
+  _keys_list = training_peptides.keys();
+  _keys = new int[bpy::len(_keys_list)];
 
-  _keys = training_peptides.keys();
   int key, length, i, j, k, h;
 
   _rng = boost::random::mt19937(rng_seed);
 
-  _num_keys = bpy::len(training_peptides.keys());
+  _num_keys = bpy::len(_keys_list);
+
+  for(i = 0; i < _num_keys; i++){
+    _keys[i] = bpy::extract<int>(_keys_list[i]);
+  }
 
   for(i = 0; i < ALPHABET_LENGTH; i++){
     _local_bg_counts[i] = 0;
@@ -518,8 +523,9 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   }
 
   for (i = 0; i < _num_keys; i++){
-    key = bpy::extract<int>(_keys[i]);
+    key = (_keys[i]);
     length = bpy::len(training_peptides[key]);
+    _lengths[key] = length;
     _counts[key] = length;
     _peptides[key] = new int*[length];
     for(j = 0; j < length; j++){
@@ -544,8 +550,8 @@ Gibbs_Py::Gibbs_Py(bpy::dict training_peptides,
   }
 
   for( i = 0; i < _num_keys; i++){
-    key = (bpy::extract<int>(_keys[i]));
-    length = bpy::len(_peptides_dict[key]);
+    key = ((_keys[i]));
+    length = _lengths[key];
     _motif_start_dists_map[key] = new double*[length];
     _motif_class_dists_map[key] = new double*[length];
     _motif_counts_map[key] = new int**[_num_motif_classes];
@@ -586,8 +592,8 @@ Gibbs_Py::~Gibbs_Py(){
   int key, length, i, j;
 
   for( i = 0; i < _num_keys; i++){
-    key = bpy::extract<int>(_keys[i]);
-    length = bpy::len(_peptides_dict[key]);
+    key = (_keys[i]);
+    length = _lengths[key];
     for( j = 0; j < length; j++){
 	delete [] _motif_start_dists_map[key][j];
 	delete [] _motif_class_dists_map[key][j];

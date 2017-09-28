@@ -357,13 +357,13 @@ bpy::tuple Gibbs_Py::run(){
     }
     pairs.push_back(std::make_pair(motif_dists_sum, i));//now we have pairs
   }
-  std::sort(pairs.begin(), pairs.end());
+  std::sort(pairs.begin(), pairs.end());//sort alphabetically by expected value
   
   int order_idx;
   for(i = 0; i < _num_motif_classes; i++){
+    order_idx = pairs[i].second;//the sorted index to use
     for(j = 0; j < _motif_length; j++){
       for(k = 0; k < ALPHABET_LENGTH; k++){//this is borked
-	order_idx = pairs[i].second;//the sorted index to use
 	_other_motif_dists[i][j][k] = _motif_dists[order_idx][j][k];
       }
     }
@@ -376,8 +376,9 @@ bpy::tuple Gibbs_Py::run(){
       }
     }
     for(i = 0; i < _lengths[key]; i++){
+      order_idx = pairs[i].second;//need to sort these to properly ID classes
       for(j = 0; j < (_num_motif_classes); j++){
-	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][i][j];
+	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][order_idx][j];
       }
     }
   }

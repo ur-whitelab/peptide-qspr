@@ -277,41 +277,7 @@ bpy::tuple Gibbs_Py::run(){
 
       }//j
     }//i
-    for (i_key = 0; i_key < _num_keys; i_key++){
-      key = (_keys[i_key]);
-      poss_starts = (key - _motif_length +1);
-      for(i = 0; i < _lengths[key]; i++){
-	clear_temp_dist();
-	for(j = 0; j < poss_starts ; j++){
-	  for(k = 0; k < _num_motif_classes; k++){
-	    //store results for later
-	    _temp_dist[j] += get_tot_prob(
-	    _peptides[key][i], key, _bg_dist, _motif_dists, _motif_class_dists_map[key][i],
-	    _motif_start_dists_map[key][i], k, j
-	    );
-	  }//k
-	}//j
-	for(j = 0; j < poss_starts; j++){
-	  _motif_start_dists_map[key][i][j] += _temp_dist[j];
-	}//j
-      }//i
-    }//i_key
-    for (i_key = 0; i_key < _num_keys; i_key++){
-      key = (_keys[i_key]);
-      poss_starts = (key - _motif_length+1);
-      for(i = 0; i < (_lengths[key]); i++){
-	motif_dists_sum = 0;
-	if(abs(1.0 - motif_dists_sum) > 0.0001 ){
-	  motif_dists_sum = 0;
-	  for(j = 0; j < (poss_starts); j++){
-	    motif_dists_sum += _motif_start_dists_map[key][i][j];
-	  }
-	  for(j = 0; j < (poss_starts); j++){
-	    _motif_start_dists_map[key][i][j] /= motif_dists_sum;
-	  }//j
-	}
-      }//i
-    }
+
     for (i_key = 0; i_key < _num_keys; i_key++){
       key = (_keys[i_key]);
       poss_starts = (key - _motif_length +1);
@@ -376,8 +342,9 @@ bpy::tuple Gibbs_Py::run(){
       }
     }
     for(i = 0; i < _lengths[key]; i++){
+     
       for(j = 0; j < (_num_motif_classes); j++){
-	order_idx = pairs[j].second;//need to sort these to properly ID classes
+	 order_idx = pairs[j].second;//need to sort these to properly ID classes
 	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][order_idx][j];
       }
     }

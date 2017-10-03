@@ -44,7 +44,11 @@ for i in range(int(min_num_clusters), int(max_num_clusters)+1):
     plt.legend(loc='best')
     plt.savefig(plotname)
 
+    best_tpr = tpr_arr[best_idx]
+    best_fpr = fpr_arr[best_idx]
+    accuracy = (best_tpr + (1.0-best_fpr))/2.0
     with open('{}/{}_clusters_ROC_log.txt'.format(dirname, i), 'w+') as f:
         f.write('best idx {}\n'.format(best_idx))
         f.write('best FPR {}\n'.format(fpr_arr[best_idx]))
         f.write('best TPR {}\n'.format(tpr_arr[best_idx]))
+        f.write('accuracy {}\n'.format(accuracy))

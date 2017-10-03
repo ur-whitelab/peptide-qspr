@@ -5,7 +5,6 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 import pdb
 import sys
-import os
 import libgibbs as lg
 import random
 import time
@@ -14,25 +13,20 @@ import sys
 
 
 def printhelp():
-    print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [alpha] [random_draws_per_step (default 0)]")
+    print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [learning_rate]")
     exit(1)
 
-if len(sys.argv) != 5 and len(sys.argv) != 6:
+if len(sys.argv) != 5:
     printhelp()
 
 INPUT = sys.argv[1]
 NUM_MOTIF_CLASSES = int(sys.argv[2]) #one class for which letter the motif starts with? why not try
 NRUNS = int(sys.argv[3])
-ALPHA = float(sys.argv[4])
-if(len(sys.argv) == 6):
-    NUM_RANDOM_DRAWS = int(sys.argv[5])
-else:
-    NUM_RANDOM_DRAWS = 0
+ETA = float(sys.argv[4])
 
 
 #CONSTANTS
 MOTIF_LENGTH = 4 #fixed motif lengths, for now
-HOMEDIR = '.'
 
 ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
             'L','K','M','F','P','S','T','W','Y','V']
@@ -56,7 +50,7 @@ def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_c
                 for j in range(length - MOTIF_LENGTH + 1):
                     for k in range(NUM_MOTIF_CLASSES):
                         #we know where the motif is
-                        if(i < motif_start or i >= (motif_start + MOTIF_LENGTH)):#\geq because of indexing
+                        if(i < motif_start or i >= motif_start + MOTIF_LENGTH):#\geq because of indexing
                             prob += bg_dist[peptide[i]] * start_dist[j] * class_dist[motif_class]
                         else:
                             prob += motif_dists[motif_class][ i - motif_start][peptide[i]] * start_dist[j] * class_dist[motif_class]
@@ -77,7 +71,7 @@ def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_c
                         if( i < j or i >= j+MOTIF_LENGTH):#we're not in a motif
                             prob += bg_dist[peptide[i]] * start_dist[j] * class_dist[k]
                         else:#we're in a motif
-                            prob += motif_dists[motif_class][i - j][peptide[i]] * start_dist[j] * class_dist[motif_class]
+                            prob += motif_dists[motif_class][i - j][peptide[i]] * start_dist[j] * class_dist[k]
         else:#don't know class value OR motif start value. iterate through both...
             for i in range(length):
                 for j in range(length - MOTIF_LENGTH+1):
@@ -91,7 +85,7 @@ def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_c
 
 def pep_to_int_list(pep):
     '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep.replace('\n', ''))))
+    return(list(map(ALPHABET.index, pep)))
 
 def read_data(datafile, motif_file=None):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
@@ -145,88 +139,59 @@ tot_bg_counts = np.zeros(len(ALPHABET), dtype=int)#times we see each AA as a b/g
 
 bg_count_list = bg_counts.tolist()
 tot_bg_count_list = tot_bg_counts.tolist()
-motif_dists_list = motif_dists.tolist()
 
-RNG_SEED =  int(time.time())#98587106
+RNG_SEED = 985871062
 
-sampler = lg.Gibbs_Py(apd_data,
-                      motif_counts,
-                      motif_start_dists,
-                      motif_class_dists,
-                      motif_dists_list,
-                      bg_count_list,
-                      tot_bg_count_list,
-                      NRUNS,
-                      MOTIF_LENGTH,
-                      NUM_MOTIF_CLASSES,
-                      RNG_SEED,
-                      NUM_RANDOM_DRAWS,
-                      ALPHA)
+test_class = lg.Gibbs_Py(apd_data,
+                         motif_counts,
+                         motif_start_dists,
+                         motif_class_dists,
+                         motif_dists,
+                         bg_count_list,
+                         tot_bg_count_list,
+                         NRUNS,
+                         MOTIF_LENGTH,
+                         NUM_MOTIF_CLASSES,
+                         RNG_SEED)
 
-print("BEGINNING GIBBS SAMPLING...")
-new_motif_dists, new_bg_dist, new_motif_start_dists, new_motif_class_dists = sampler.run()
-print("GIBBS SAMPLING COMPLETE")
+for i in range(100):
+    choice = test_class.test_random_choice(10)
+    assert(choice == "SUCCESS")
 
+print("BEGINNING TESTS...")
 
-print("DRAWING PLOTS...")
+print("TOTAL ITERATIONS: {}".format(len(apd_data[5])))
+for i in range(len(apd_data[5])):
+#    print("starting iteration {}".format(i))
+    prob = get_tot_prob(apd_data[5][i], bg_dist, motif_dists, motif_class_dists[5][i], motif_start_dists[5][i])
+    #test that get_tot_prob works on a clean slate
+    assert(test_class.test_get_tot_prob(prob, i) == "TEST PASSED")
+    #test that the RNG seed worked
+    assert(test_class.test_rng(random.random()) == "TEST PASSED")
+#    print('made it through iteration {}'.format(i))
 
-outpath = '{}/gpos_{}_classes_length_{}'.format(HOMEDIR, NUM_MOTIF_CLASSES, MOTIF_LENGTH)
-if not(os.path.exists(outpath)):
-    os.makedirs(outpath)
+#    choice = int(choice[-1])
+#    assert(choice > -1 and choice < 10)
 
-for i in range(NUM_MOTIF_CLASSES):
-    for j in range(MOTIF_LENGTH):
-        fig = plt.figure()
-        plt.xlabel('Amino Acid')
-        plt.ylabel('Relative Frequency')
-        plt.title('position {} in motif class {}'.format(j,i))
-        plt.bar(range(len(ALPHABET)), new_motif_dists[i][j])
-        plt.xticks(range(len(ALPHABET)), ALPHABET)
-        plt.savefig('{}/class_{}_of_{}_position_{}_motif_dist.png'.format(outpath, i, NUM_MOTIF_CLASSES,j))
-        plt.close(fig)
-        np.savetxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(outpath, i, NUM_MOTIF_CLASSES, j), new_motif_dists[i][j])
+print("TESTING THE run() METHOD...")
+test_class.run()
+print("run() METHOD SUCCEEDED")
 
-fig = plt.figure()
-plt.xlabel('Amino Acid')
-plt.ylabel('Relative Frequency')
-plt.title('Background Distribution')
-plt.bar(range(len(ALPHABET)), new_bg_dist)
-plt.xticks(range(len(ALPHABET)), ALPHABET)
-plt.savefig('{}/bg_dist.png'.format(outpath))
-plt.close(fig)
-np.savetxt('{}/bg_dist.txt'.format(outpath), new_bg_dist)
+print("ALL TESTS PASSED")
 
 
-collapsed_start_dists = {}
-collapsed_class_dists = {}
-for key in apd_data.keys():
-    collapsed_start_dists[key] = np.sum(motif_start_dists[key], axis=0) / np.sum(motif_start_dists[key])
-    collapsed_class_dists[key] = np.sum(motif_class_dists[key], axis=0) / np.sum(motif_class_dists[key])
+print("TIMING METHODS")
 
-for key in apd_data.keys():
-    '''fig = plt.figure()
-    plt.xlabel('Start Position')
-    plt.ylabel('Relative Frequency')
-    plt.title('Motif Length {} Start Position Histogram for Length {}'.format(MOTIF_LENGTH, key))
-    plt.bar(range(key-MOTIF_LENGTH+1), collapsed_start_dists[key])
-    plt.savefig('{}/motif_length_{}_length_{}_start_dist.png'.format(outpath, MOTIF_LENGTH, key))
-    plt.close(fig)'''
-    np.savetxt('{}/motif_length_{}_length_{}_start_dist.txt'.format(outpath, MOTIF_LENGTH, key), collapsed_start_dists[key])
+niters = 10000
+start_time = time.time()
+for i in range(niters):
+    prob = get_tot_prob(apd_data[5][0], bg_dist, motif_dists, motif_class_dists[5][0], motif_start_dists[5][0])
+end_time = time.time()
+python_time = (end_time - start_time)
+start_time = time.time()
+test_class.time_get_tot_prob(niters, 0)
+end_time = time.time()
+cpp_time = (end_time - start_time)
 
-for key in apd_data.keys():
-    for i in range(len(apd_data[key])):
-        '''fig = plt.figure()
-        plt.xlabel('Motif Class')
-        plt.ylabel('Relative Probability')
-        plt.title('Motif Length {} Motif Class Histogram for Length {} Index {}'.format(MOTIF_LENGTH, key, i))
-        plt.bar(range(NUM_MOTIF_CLASSES), motif_class_dists[key][i])
-        plt.savefig('{}/motif_length_{}_length_{}_index_{}_class_dist.png'.format(outpath, MOTIF_LENGTH, key, i))
-        plt.close(fig)'''
-        np.savetxt('{}/motif_length_{}_length_{}_index_{}_class_dist.txt'.format(outpath, MOTIF_LENGTH, key, i), motif_class_dists[key][i])
-
-with open('{}/info.txt'.format(outpath), 'w+') as f:
-    f.write('NUM_CLASSES {}\n'.format(NUM_MOTIF_CLASSES))
-    f.write('NRUNS {}\n'.format(NRUNS))
-    f.write('ALPHA {}\n'.format(ALPHA))
-    f.write('NOISE {}\n'.format(NUM_RANDOM_DRAWS))
-    
+print("FOR {} ITERATIONS OF get_tot_prob(), PYTHON TIME WAS {} AND C++ TIME WAS {}".format(niters, python_time, cpp_time))
+print("SPEEDUP: ~{:.4}x".format(python_time/cpp_time))

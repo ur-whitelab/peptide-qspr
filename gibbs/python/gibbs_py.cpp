@@ -376,8 +376,9 @@ bpy::tuple Gibbs_Py::run(){
       }
     }
     for(i = 0; i < _lengths[key]; i++){
-      order_idx = pairs[i].second;//need to sort these to properly ID classes
+
       for(j = 0; j < (_num_motif_classes); j++){
+	order_idx = pairs[j].second;//need to sort these to properly ID classes
 	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][order_idx][j];
       }
     }

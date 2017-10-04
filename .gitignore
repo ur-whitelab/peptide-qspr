@@ -2,6 +2,7 @@
 *~
 *.png
 *.log
+**/plots
 **/data
 **/build
 **/gaussmix

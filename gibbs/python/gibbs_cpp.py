@@ -31,7 +31,7 @@ else:
 
 
 #CONSTANTS
-MOTIF_LENGTH = 4 #fixed motif lengths, for now
+MOTIF_LENGTH = 3 #fixed motif lengths, for now
 HOMEDIR = '.'
 
 ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
@@ -77,7 +77,7 @@ def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_c
                         if( i < j or i >= j+MOTIF_LENGTH):#we're not in a motif
                             prob += bg_dist[peptide[i]] * start_dist[j] * class_dist[k]
                         else:#we're in a motif
-                            prob += motif_dists[motif_class][i - j][peptide[i]] * start_dist[j] * class_dist[motif_class]
+                            prob += motif_dists[motif_class][i - j][peptide[i]] * start_dist[j] * class_dist[k]
         else:#don't know class value OR motif start value. iterate through both...
             for i in range(length):
                 for j in range(length - MOTIF_LENGTH+1):
@@ -96,35 +96,45 @@ def pep_to_int_list(pep):
 def read_data(datafile, motif_file=None):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
        and reads it into a list.'''
-    data = {}#dict keyed by peptide length containing the sequences
+    train_data = {}#dict keyed by peptide length containing the sequences
+    test_data = {}#for testing
     with open(datafile, 'r') as f:
         big_aa_string = ''#for training the whole background distro
-        lines = f.readlines()
+        lines= f.readlines()
+        random.shuffle(lines)#randomly assign test vs train data
         nlines = len(lines)
         start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
+        for line in lines[start_idx:int(0.8 * len(lines))]:#skip the header
             pep = line.split(',')[0]
             length = len(pep)
             big_aa_string+=pep
-            if(length not in data.keys()):
-                data[length] = [(pep_to_int_list(pep))]
+            if(length not in train_data.keys()):
+                train_data[length] = [(pep_to_int_list(pep))]
             else:
-                data[length].append((pep_to_int_list(pep)))
+                train_data[length].append((pep_to_int_list(pep)))
+        for line in lines[int(0.8 * len(lines)):]:
+            pep = line.split(',')[0]
+            length = len(pep)
+            big_aa_string += pep
+            if(length not in test_data.keys()):
+                test_data[length] = [(pep_to_int_list(pep))]
+            else:
+                test_data[length].append((pep_to_int_list(pep)))
         big_aa_list = pep_to_int_list(big_aa_string)
-    return(data, big_aa_list)
+    return(train_data, test_data, big_aa_list)
 
 
-apd_data, all_apd_aa  = read_data(INPUT)#('/home/rainier/pymc3_qspr/gibbs/control_peptides.txt')
+train_data, test_data, all_apd_aa  = read_data(INPUT)#('/home/rainier/pymc3_qspr/gibbs/control_peptides.txt')
 
 #initialize the OVERALL distributions as uniform
 motif_dists = np.ones((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET))) / float(len(ALPHABET))
 
 tot_motif_counts = {}#keep track of raw counts for EACH peptide separately
-for key in apd_data.keys():
+for key in train_data.keys():
     tot_motif_counts[key] = np.zeros((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET)))
 
 motif_counts = {}#this one is for local counting within the loop only.
-for key in apd_data.keys():
+for key in train_data.keys():
     motif_counts[key] = np.zeros((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET)))
 
 
@@ -135,11 +145,11 @@ motif_class_dists = {}
 #raw counts tracked PER peptide
 motif_start_counts = {}
 #motif_class_counts = {}
-for key in apd_data.keys():
-    motif_start_dists[key] = np.ones((len(apd_data[key]), (key - MOTIF_LENGTH+1)))/float(key - MOTIF_LENGTH+1)
-    motif_start_counts[key] = np.zeros((len(apd_data[key]), (key - MOTIF_LENGTH +1)), dtype = int)
-    motif_class_dists[key] = np.ones((len(apd_data[key]) , NUM_MOTIF_CLASSES)) / float(NUM_MOTIF_CLASSES)
-#    motif_class_counts[key] = np.zeros((len(apd_data[key]) ,NUM_MOTIF_CLASSES))
+for key in train_data.keys():
+    motif_start_dists[key] = np.ones((len(train_data[key]), (key - MOTIF_LENGTH+1)))/float(key - MOTIF_LENGTH+1)
+    motif_start_counts[key] = np.zeros((len(train_data[key]), (key - MOTIF_LENGTH +1)), dtype = int)
+    motif_class_dists[key] = np.ones((len(train_data[key]) , NUM_MOTIF_CLASSES)) / float(NUM_MOTIF_CLASSES)
+#    motif_class_counts[key] = np.zeros((len(train_data[key]) ,NUM_MOTIF_CLASSES))
 bg_counts = np.zeros(len(ALPHABET), dtype=int)#times we see each AA as a b/g element
 tot_bg_counts = np.zeros(len(ALPHABET), dtype=int)#times we see each AA as a b/g element
 
@@ -149,7 +159,7 @@ motif_dists_list = motif_dists.tolist()
 
 RNG_SEED =  int(time.time())#98587106
 
-sampler = lg.Gibbs_Py(apd_data,
+sampler = lg.Gibbs_Py(train_data,
                       motif_counts,
                       motif_start_dists,
                       motif_class_dists,
@@ -199,11 +209,11 @@ np.savetxt('{}/bg_dist.txt'.format(outpath), new_bg_dist)
 
 collapsed_start_dists = {}
 collapsed_class_dists = {}
-for key in apd_data.keys():
+for key in train_data.keys():
     collapsed_start_dists[key] = np.sum(motif_start_dists[key], axis=0) / np.sum(motif_start_dists[key])
     collapsed_class_dists[key] = np.sum(motif_class_dists[key], axis=0) / np.sum(motif_class_dists[key])
 
-for key in apd_data.keys():
+for key in train_data.keys():
     '''fig = plt.figure()
     plt.xlabel('Start Position')
     plt.ylabel('Relative Frequency')
@@ -213,8 +223,8 @@ for key in apd_data.keys():
     plt.close(fig)'''
     np.savetxt('{}/motif_length_{}_length_{}_start_dist.txt'.format(outpath, MOTIF_LENGTH, key), collapsed_start_dists[key])
 
-for key in apd_data.keys():
-    for i in range(len(apd_data[key])):
+for key in train_data.keys():
+    for i in range(len(train_data[key])):
         '''fig = plt.figure()
         plt.xlabel('Motif Class')
         plt.ylabel('Relative Probability')
@@ -230,3 +240,14 @@ with open('{}/info.txt'.format(outpath), 'w+') as f:
     f.write('ALPHA {}\n'.format(ALPHA))
     f.write('NOISE {}\n'.format(NUM_RANDOM_DRAWS))
     
+with open('{}/train_set.txt'.format(outpath), 'w+') as f:
+    for key in train_data.keys():
+        for i in range(len(train_data[key])):
+            peplist = [str(item) for item in (list(map(lambda x: ALPHABET[x], train_data[key][i])))]
+            f.write('{},\n'.format(''.join(peplist)))
+
+with open('{}/test_set.txt'.format(outpath), 'w+') as f:
+    for key in test_data.keys():
+        for i in range(len(test_data[key])):
+            peplist = [str(item) for item in (list(map(lambda x: ALPHABET[x], test_data[key][i])))]
+            f.write('{},\n'.format(''.join(peplist)))

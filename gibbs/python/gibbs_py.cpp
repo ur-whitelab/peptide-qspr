@@ -300,7 +300,7 @@ bpy::tuple Gibbs_Py::run(){
       key = (_keys[i_key]);
       poss_starts = (key - _motif_length+1);
       for(i = 0; i < (_lengths[key]); i++){
-	motif_dists_sum = 0;
+	motif_dists_sum = 0.0;
 	if(abs(1.0 - motif_dists_sum) > 0.0001 ){
 	  motif_dists_sum = 0;
 	  for(j = 0; j < (poss_starts); j++){
@@ -378,7 +378,7 @@ bpy::tuple Gibbs_Py::run(){
     for(i = 0; i < _lengths[key]; i++){
       for(j = 0; j < (_num_motif_classes); j++){
 	order_idx = pairs[j].second;//need to sort these to properly ID classes
-	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][order_idx][j];
+	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][i][order_idx];
       }
     }
   }

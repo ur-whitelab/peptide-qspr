@@ -14,24 +14,25 @@ import sys
 
 
 def printhelp():
-    print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [alpha] [random_draws_per_step (default 0)]")
+    print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [motif_length] [num_iterations] [alpha] [random_draws_per_step (default 0)]")
     exit(1)
 
-if len(sys.argv) != 5 and len(sys.argv) != 6:
+if len(sys.argv) != 6 and len(sys.argv) != 7:
     printhelp()
 
 INPUT = sys.argv[1]
 NUM_MOTIF_CLASSES = int(sys.argv[2]) #one class for which letter the motif starts with? why not try
-NRUNS = int(sys.argv[3])
-ALPHA = float(sys.argv[4])
-if(len(sys.argv) == 6):
-    NUM_RANDOM_DRAWS = int(sys.argv[5])
+MOTIF_LENGTH = int(sys.argv[3])
+NRUNS = int(sys.argv[4])
+ALPHA = float(sys.argv[5])
+if(len(sys.argv) == 7):
+    NUM_RANDOM_DRAWS = int(sys.argv[6])
 else:
     NUM_RANDOM_DRAWS = 0
 
 
 #CONSTANTS
-MOTIF_LENGTH = 3 #fixed motif lengths, for now
+#MOTIF_LENGTH = 8 #fixed motif lengths, for now
 HOMEDIR = '/home/rbarret8/pymc3_qspr/gibbs/python/build'
 
 ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
@@ -186,24 +187,24 @@ if not(os.path.exists(outpath)):
 
 for i in range(NUM_MOTIF_CLASSES):
     for j in range(MOTIF_LENGTH):
-        fig = plt.figure()
+        '''fig = plt.figure()
         plt.xlabel('Amino Acid')
         plt.ylabel('Relative Frequency')
         plt.title('position {} in motif class {}'.format(j,i))
         plt.bar(range(len(ALPHABET)), new_motif_dists[i][j])
         plt.xticks(range(len(ALPHABET)), ALPHABET)
         plt.savefig('{}/class_{}_of_{}_position_{}_motif_dist.png'.format(outpath, i, NUM_MOTIF_CLASSES,j))
-        plt.close(fig)
+        plt.close(fig)'''
         np.savetxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(outpath, i, NUM_MOTIF_CLASSES, j), new_motif_dists[i][j])
 
-fig = plt.figure()
+'''fig = plt.figure()
 plt.xlabel('Amino Acid')
 plt.ylabel('Relative Frequency')
 plt.title('Background Distribution')
 plt.bar(range(len(ALPHABET)), new_bg_dist)
 plt.xticks(range(len(ALPHABET)), ALPHABET)
 plt.savefig('{}/bg_dist.png'.format(outpath))
-plt.close(fig)
+plt.close(fig)'''
 np.savetxt('{}/bg_dist.txt'.format(outpath), new_bg_dist)
 
 

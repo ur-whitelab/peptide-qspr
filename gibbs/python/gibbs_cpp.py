@@ -32,7 +32,7 @@ else:
 
 #CONSTANTS
 MOTIF_LENGTH = 4 #fixed motif lengths, for now
-HOMEDIR = '.'
+HOMEDIR = '/home/rbarret8/pymc3_qspr/gibbs/python'
 
 ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
             'L','K','M','F','P','S','T','W','Y','V']
@@ -176,16 +176,17 @@ if not(os.path.exists(outpath)):
 
 for i in range(NUM_MOTIF_CLASSES):
     for j in range(MOTIF_LENGTH):
-        fig = plt.figure()
+        '''fig = plt.figure()
         plt.xlabel('Amino Acid')
         plt.ylabel('Relative Frequency')
         plt.title('position {} in motif class {}'.format(j,i))
         plt.bar(range(len(ALPHABET)), new_motif_dists[i][j])
         plt.xticks(range(len(ALPHABET)), ALPHABET)
         plt.savefig('{}/class_{}_of_{}_position_{}_motif_dist.png'.format(outpath, i, NUM_MOTIF_CLASSES,j))
-        plt.close(fig)
+        plt.close(fig)'''
         np.savetxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(outpath, i, NUM_MOTIF_CLASSES, j), new_motif_dists[i][j])
 
+'''
 fig = plt.figure()
 plt.xlabel('Amino Acid')
 plt.ylabel('Relative Frequency')
@@ -193,7 +194,7 @@ plt.title('Background Distribution')
 plt.bar(range(len(ALPHABET)), new_bg_dist)
 plt.xticks(range(len(ALPHABET)), ALPHABET)
 plt.savefig('{}/bg_dist.png'.format(outpath))
-plt.close(fig)
+plt.close(fig)'''
 np.savetxt('{}/bg_dist.txt'.format(outpath), new_bg_dist)
 
 

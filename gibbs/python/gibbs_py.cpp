@@ -375,13 +375,13 @@ bpy::tuple Gibbs_Py::run(){
 	_motif_start_dists[key][i][j] = _motif_start_dists_map[key][i][j];
       }
     }
-    for(i = 0; i < _lengths[key]; i++){
+    /*for(i = 0; i < _lengths[key]; i++){
 
       for(j = 0; j < (_num_motif_classes); j++){
 	order_idx = pairs[j].second;//need to sort these to properly ID classes
-	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][order_idx][j];
+	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][i][order_idx];
       }
-    }
+    }*/
   }
   bpy::list other_bg_dist;
   for(i = 0; i < ALPHABET_LENGTH; i++){

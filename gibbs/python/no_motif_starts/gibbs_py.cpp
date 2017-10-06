@@ -217,140 +217,160 @@ bpy::tuple Gibbs_Py::run(){
     uniform_motif_idx_dist[i] = 1.0/_motif_length;
   }
   int* pep;
-  for(step = 0; step < _num_iters; step++){
-    //loop over keys
-    motif_dists_sum = 0;
-    for (i_key = 0; i_key < _num_keys; i_key++){
-      key = (_keys[i_key]);
-      poss_starts = (key - _motif_length +1);
+  if(_num_motif_classes == 0){//just do background
+    for(step = 0; step < _num_iters; step++){
+      //loop over keys
+      motif_dists_sum = 0;
+      for (i_key = 0; i_key < _num_keys; i_key++){
+	key = (_keys[i_key]);
+	//loop over all peptides of that length
+	for(i = 0; i < _lengths[key]; i++){
+	  pep = _peptides[key][i];
+	  //randomly choose motif start
+	  do_bg_counts(pep, key, 0);
+	  update_bg_dist();
+	  //add random noise
+	}//i
+      }//i_key
+    }//step
+  }
+  else if(_num_motif_classes > 0){
+    for(step = 0; step < _num_iters; step++){
+      //loop over keys
+      motif_dists_sum = 0;
+      for (i_key = 0; i_key < _num_keys; i_key++){
+	key = (_keys[i_key]);
+	poss_starts = (key - _motif_length +1);
+	for(i = 0; i < _num_motif_classes; i++){
+	  for(j = 0; j < _motif_length; j++){
+	    for(k = 0; k < ALPHABET_LENGTH; k++){
+	      _motif_counts_map[key][i][j][k] = 0;
+	    }
+	  }
+	}
+	//loop over all peptides of that length
+	for(i = 0; i < _lengths[key]; i++){
+	  count = 0;//for the L1 regularization step
+	  pep = _peptides[key][i];
+	  //randomly choose motif start
+	  motif_start = random_choice(poss_starts, _motif_start_dists_map[key][i]);
+	  do_bg_counts(pep, key, 0);
+	  update_bg_dist();
+	  motif_class = random_choice(_num_motif_classes, _motif_class_dists_map[key][i]);
+	  for (j = 0; j < _motif_length; j++){
+	    int aa = pep[j+motif_start];
+	    _motif_counts_map[key][motif_class][j][aa] += 1;
+	    count += 1;
+	  }//j
+	  //add random noise
+	  for(j = 0; j < _num_random_draws; j++){
+	    k = random_choice(_motif_length, uniform_motif_idx_dist);
+	    random_idx = random_choice(ALPHABET_LENGTH, uniform_pep_dist);
+	    _motif_counts_map[key][motif_class][k][random_idx] += 1;
+	    count += 1;
+	  }
+	  for (j = 0; j < _motif_length; j++){
+	    for(k = 0; k < ALPHABET_LENGTH; k++){
+	      _eta = _horizon_param / sqrt(_grad_square_sums[motif_class][j][k]);
+	      _gradient = ( double(count) * ( double(count) * _motif_dists[motif_class][j][k] - double(_motif_counts_map[key][motif_class][j][k])/double(count)) ) + _alpha;//apply regularization
+	      _motif_dists[motif_class][j][k] -= (_eta * _gradient > _motif_dists[motif_class][j][k] ? _motif_dists[motif_class][j][k]: _eta * _gradient );
+	      _grad_square_sums[motif_class][j][k] += _gradient * _gradient;
+	    }
+	  }
+	}//i
+      }//i_key
+      //NORMALIZE MOTIF DISTROS
       for(i = 0; i < _num_motif_classes; i++){
 	for(j = 0; j < _motif_length; j++){
-	  for(k = 0; k < ALPHABET_LENGTH; k++){
-	    _motif_counts_map[key][i][j][k] = 0;
-	  }
-	}
-      }
-      //loop over all peptides of that length
-      for(i = 0; i < _lengths[key]; i++){
-	count = 0;//for the L1 regularization step
-	pep = _peptides[key][i];
-	//randomly choose motif start
-	motif_start = random_choice(poss_starts, _motif_start_dists_map[key][i]);
-	do_bg_counts(pep, key, motif_start);
-	update_bg_dist();
-	motif_class = random_choice(_num_motif_classes, _motif_class_dists_map[key][i]);
-	for (j = 0; j < _motif_length; j++){
-	  int aa = pep[j+motif_start];
-	  _motif_counts_map[key][motif_class][j][aa] += 1;
-	  count += 1;
-	}//j
-	//add random noise
-	for(j = 0; j < _num_random_draws; j++){
-	  k = random_choice(_motif_length, uniform_motif_idx_dist);
-	  random_idx = random_choice(ALPHABET_LENGTH, uniform_pep_dist);
-	  _motif_counts_map[key][motif_class][k][random_idx] += 1;
-	  count += 1;
-	  }
-	for (j = 0; j < _motif_length; j++){
-	  for(k = 0; k < ALPHABET_LENGTH; k++){
-	    _eta = _horizon_param / sqrt(_grad_square_sums[motif_class][j][k]);
-	    _gradient = ( double(count) * ( double(count) * _motif_dists[motif_class][j][k] - double(_motif_counts_map[key][motif_class][j][k])/double(count)) ) + _alpha;//apply regularization
-	    _motif_dists[motif_class][j][k] -= (_eta * _gradient > _motif_dists[motif_class][j][k] ? _motif_dists[motif_class][j][k]: _eta * _gradient );
-	    _grad_square_sums[motif_class][j][k] += _gradient * _gradient;
-	  }
-	}
-      }//i
-    }//i_key
-    //NORMALIZE MOTIF DISTROS
-    for(i = 0; i < _num_motif_classes; i++){
-      for(j = 0; j < _motif_length; j++){
-	motif_dists_sum = 0.0;
-	if(abs(1.0 - motif_dists_sum) > 0.0001 ){
 	  motif_dists_sum = 0.0;
-	  for(k = 0; k < ALPHABET_LENGTH; k++){
-	    _motif_dists[i][j][k] = std::max(_motif_dists[i][j][k], 0.0);
-	    motif_dists_sum += _motif_dists[i][j][k];
-	  }//k
-	  for(k = 0; k < ALPHABET_LENGTH; k++){
-	    _motif_dists[i][j][k] /= motif_dists_sum;
+	  if(abs(1.0 - motif_dists_sum) > 0.0001 ){
+	    motif_dists_sum = 0.0;
+	    for(k = 0; k < ALPHABET_LENGTH; k++){
+	      _motif_dists[i][j][k] = std::max(_motif_dists[i][j][k], 0.0);
+	      motif_dists_sum += _motif_dists[i][j][k];
+	    }//k
+	    for(k = 0; k < ALPHABET_LENGTH; k++){
+	      _motif_dists[i][j][k] /= motif_dists_sum;
 
-	  }//k
-	}
+	    }//k
+	  }
 
-      }//j
-    }//i
-    for (i_key = 0; i_key < _num_keys; i_key++){
-      key = (_keys[i_key]);
-      poss_starts = (key - _motif_length +1);
-      for(i = 0; i < _lengths[key]; i++){
-	clear_temp_dist();
-	for(j = 0; j < (_num_motif_classes); j++){
-	  for(k = 0; k < (poss_starts); k++){
-	    _temp_dist[j] += get_tot_prob(
-	      _peptides[key][i], key, _bg_dist, _motif_dists,
-	      _motif_class_dists_map[key][i], _motif_start_dists_map[key][i], j, k
-	      );
-	  }//k
 	}//j
-      	for(j = 0; j < (_num_motif_classes); j++){
-	  _motif_class_dists_map[key][i][j] += _temp_dist[j];
-	}
       }//i
-      for(i = 0; i < (_lengths[key]); i++){
-	motif_dists_sum = 0;
-	if(abs(1.0 - motif_dists_sum) > 0.00001){
+      for (i_key = 0; i_key < _num_keys; i_key++){
+	key = (_keys[i_key]);
+	poss_starts = (key - _motif_length +1);
+	for(i = 0; i < _lengths[key]; i++){
+	  clear_temp_dist();
+	  for(j = 0; j < (_num_motif_classes); j++){
+	    for(k = 0; k < (poss_starts); k++){
+	      _temp_dist[j] += get_tot_prob(
+		_peptides[key][i], key, _bg_dist, _motif_dists,
+		_motif_class_dists_map[key][i], _motif_start_dists_map[key][i], j, k
+		);
+	    }//k
+	  }//j
+	  for(j = 0; j < (_num_motif_classes); j++){
+	    _motif_class_dists_map[key][i][j] += _temp_dist[j];
+	  }
+	}//i
+	for(i = 0; i < (_lengths[key]); i++){
 	  motif_dists_sum = 0;
-	  for(j = 0; j < _num_motif_classes; j++){
-	    _motif_class_dists_map[key][i][j] = std::max(_motif_class_dists_map[key][i][j], 0.0);
-	    motif_dists_sum += _motif_class_dists_map[key][i][j];
-	  }
-	  for(j = 0; j < _num_motif_classes; j++){
-	    _motif_class_dists_map[key][i][j] /= motif_dists_sum;
+	  if(abs(1.0 - motif_dists_sum) > 0.00001){
+	    motif_dists_sum = 0;
+	    for(j = 0; j < _num_motif_classes; j++){
+	      _motif_class_dists_map[key][i][j] = std::max(_motif_class_dists_map[key][i][j], 0.0);
+	      motif_dists_sum += _motif_class_dists_map[key][i][j];
+	    }
+	    for(j = 0; j < _num_motif_classes; j++){
+	      _motif_class_dists_map[key][i][j] /= motif_dists_sum;
+
+	    }
 
 	  }
+	}
+      }//i_key
+    }//step
+    //now that it's all done, return the distros!
+    //first, sort by expected value (alphabetical based on weights from dists)
+    std::vector<std::pair <double, int> > pairs;
 
+    for(i = 0; i < _num_motif_classes; i++){
+      motif_dists_sum = 0.0;
+      for(j = 0; j < _motif_length; j++){
+	for(k = 0; k < ALPHABET_LENGTH; k++){
+	  motif_dists_sum += (_motif_dists[i][j][k] * double(k));//end up withthe expected value
 	}
       }
-    }//i_key
-  }//step
-  //now that it's all done, return the distros!
-  //first, sort by expected value (alphabetical based on weights from dists)
-  std::vector<std::pair <double, int> > pairs;
-
-  for(i = 0; i < _num_motif_classes; i++){
-    motif_dists_sum = 0.0;
-    for(j = 0; j < _motif_length; j++){
-      for(k = 0; k < ALPHABET_LENGTH; k++){
-	motif_dists_sum += (_motif_dists[i][j][k] * double(k));//end up withthe expected value
-      }
+      pairs.push_back(std::make_pair(motif_dists_sum, i));//now we have pairs
     }
-    pairs.push_back(std::make_pair(motif_dists_sum, i));//now we have pairs
-  }
-  std::sort(pairs.begin(), pairs.end());//sort alphabetically by expected value
+    std::sort(pairs.begin(), pairs.end());//sort alphabetically by expected value
   
-  int order_idx;
-  for(i = 0; i < _num_motif_classes; i++){
-    order_idx = pairs[i].second;//the sorted index to use
-    for(j = 0; j < _motif_length; j++){
-      for(k = 0; k < ALPHABET_LENGTH; k++){//this is borked
-	_other_motif_dists[i][j][k] = _motif_dists[order_idx][j][k];
+    int order_idx;
+    for(i = 0; i < _num_motif_classes; i++){
+      order_idx = pairs[i].second;//the sorted index to use
+      for(j = 0; j < _motif_length; j++){
+	for(k = 0; k < ALPHABET_LENGTH; k++){//this is borked
+	  _other_motif_dists[i][j][k] = _motif_dists[order_idx][j][k];
+	}
       }
     }
-  }
-  for(i_key = 0; i_key < _num_keys; i_key++){
-    key = (_keys[i_key]);
-    for(i = 0; i < _lengths[key]; i++){
+    /*for(i_key = 0; i_key < _num_keys; i_key++){
+      key = (_keys[i_key]);
+      for(i = 0; i < _lengths[key]; i++){
       for(j = 0; j < (key - _motif_length +1); j++){
-	_motif_start_dists[key][i][j] = _motif_start_dists_map[key][i][j];
+      _motif_start_dists[key][i][j] = _motif_start_dists_map[key][i][j];
       }
-    }
-    for(i = 0; i < _lengths[key]; i++){
+      }
+      /*for(i = 0; i < _lengths[key]; i++){
 
       for(j = 0; j < (_num_motif_classes); j++){
-	order_idx = pairs[j].second;//need to sort these to properly ID classes
-	_motif_class_dists[key][i][j] = _motif_class_dists_map[key][order_idx][j];
+      order_idx = pairs[j].second;//need to sort these to properly ID classes
+      _motif_class_dists[key][i][j] = _motif_class_dists_map[key][i][order_idx];
       }
-    }
+      }
+      }*/
+
   }
   bpy::list other_bg_dist;
   for(i = 0; i < ALPHABET_LENGTH; i++){

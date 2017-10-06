@@ -4,7 +4,7 @@ import sys
 import math
 
 def printhelp():
-    print("Usage: do_gpos_gibbs_ROC.py [root_directory] [num_classes] [motif_length]")
+    print("Usage: do_gibbs_ROC.py [root_directory] [num_classes] [motif_length]")
     exit(1)
 
 if len(sys.argv) != 4:
@@ -17,8 +17,8 @@ MOTIF_LENGTH = int(sys.argv[3])
 NPOINTS = 5000
 
 DATA_DIR = '/home/rainier/pymc3_qspr/data/'
-TRAINFILE = DIRNAME+'train_set.txt'
-TESTFILE = DIRNAME+'test_set.txt'
+TRAINFILE = DIRNAME+'/train_set.txt'
+TESTFILE = DIRNAME+'/test_set.txt'
 fakefile = DATA_DIR + 'pdb_distributed_apd_length_peps.txt'
 fake_data = []
 with open(fakefile, 'r') as datafile:
@@ -69,15 +69,21 @@ def read_data(trainfile, testfile):
 def calc_prob(peptide, bg_dist,  motif_dists):
     '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
     length = len(peptide)
-    start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
-    prob = 0.0
-    for i in range(length):
-        for j in range(length - MOTIF_LENGTH+1):
+    if(length - MOTIF_LENGTH +1 > 0):
+        start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
+        prob = 0.0
+        for i in range(length):
+            for j in range(length - MOTIF_LENGTH+1):
+                for k in range(NUM_MOTIF_CLASSES):
+                    if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
+                        prob += bg_dist[peptide[i]] * start_dist[j]
+                    else:#we are in a motif 
+                        prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]
+    else:#impossible to have a motif of this length, all b/g
+        prob = 0.0
+        for i in range(length):
             for k in range(NUM_MOTIF_CLASSES):
-                if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
-                    prob += bg_dist[peptide[i]] * start_dist[j]
-                else:#we are in a motif 
-                    prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]
+                prob+=bg_dist[peptide[i]]
     prob /= float(length)
     return(prob)
 

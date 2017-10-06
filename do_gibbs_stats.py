@@ -1,6 +1,14 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import sys
+import os
+
+def printHelp():
+    print("Usage: do_gibbs_stats.py [directory] [num_motifs] [min_motif_length] [max_motif_length]")
+    exit(1)
+
+if( len(sys.argv) != 5):
+    printHelp()
 
 directory = sys.argv[1]
 num_classes = int(sys.argv[2])
@@ -11,11 +19,24 @@ fpr_arr, tpr_arr, accuracy_arr = [], [], []
 x_axis = range(min_length, max_length+1)
 
 for j in range(min_length, max_length+1):
-    with open('{}/gpos_{}_classes_length_{}/{}_classes_length_{}_ROC_log.txt'.format(directory, num_classes, j, num_classes, j)) as f:
-        lines = f.readlines()
-        fpr_arr.append(lines[1].split()[2])
-        tpr_arr.append(lines[2].split()[2])
-        accuracy_arr.append(lines[3].split()[1])
+    fname = '{}/gpos_{}_classes_length_{}/{}_classes_length_{}_ROC_log.txt'.format(directory, num_classes, j, num_classes, j)
+    if(os.path.isfile(fname)):
+        with open(fname) as f:
+            lines = f.readlines()
+            fpr_arr.append(lines[1].split()[2])
+            tpr_arr.append(lines[2].split()[2])
+            accuracy_arr.append(lines[3].split()[1])
+    else:
+        fpr_arr.append(None)
+        tpr_arr.append(None)
+        accuracy_arr.append(None)
+fpr_arr = np.array(fpr_arr).astype(np.double)
+tpr_arr = np.array(tpr_arr).astype(np.double)
+accuracy_arr = np.array(accuracy_arr).astype(np.double)
+
+fprmask = np.isfinite(fpr_arr)
+tprmask = np.isfinite(tpr_arr)
+accmask = np.isfinite(accuracy_arr)
 
 plt.figure()
 plt.title('Statistics for Various Motif Lengths, {} Classes'.format(num_classes))

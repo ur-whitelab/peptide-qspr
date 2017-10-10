@@ -4,22 +4,33 @@ import sys
 import os
 
 def printHelp():
-    print("Usage: do_gibbs_stats.py [directory] [num_motifs] [min_motif_length] [max_motif_length]")
+    print("Usage: do_gibbs_stats.py [directory] [num_motifs] [min_motif_length] [max_motif_length] [HUMAN? (default: False)]\nInput 'HUMAN' as True if we're doing human datasets, otherwise defaults to doing gram+.")
     exit(1)
 
-if( len(sys.argv) != 5):
+if( len(sys.argv) != 5 and len(sys.argv) != 6):
     printHelp()
 
+HUMAN = False
+    
 directory = sys.argv[1]
 num_classes = int(sys.argv[2])
 min_length = int(sys.argv[3])
 max_length = int(sys.argv[4])
+if(len(sys.argv) == 6):
+    HUMAN = bool(sys.argv[5])
+    
+    
 
 fpr_arr, tpr_arr, accuracy_arr = [], [], []
 x_axis = range(min_length, max_length+1)
 
+if(HUMAN):
+    prefactor = 'human'
+else:
+    prefactor = 'gpos'
+
 for j in range(min_length, max_length+1):
-    fname = '{}/gpos_{}_classes_length_{}/{}_classes_length_{}_ROC_log.txt'.format(directory, num_classes, j, num_classes, j)
+    fname = '{}/{}_{}_classes_length_{}/{}_classes_length_{}_ROC_log.txt'.format(directory, prefactor, num_classes, j, num_classes, j)
     if(os.path.isfile(fname)):
         with open(fname) as f:
             lines = f.readlines()

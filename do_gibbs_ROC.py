@@ -69,7 +69,7 @@ def read_data(trainfile, testfile):
 def calc_prob(peptide, bg_dist,  motif_dists):
     '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
     length = len(peptide)
-    if(length - MOTIF_LENGTH +1 > 0):
+    if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
         start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
         prob = 0.0
         for i in range(length):
@@ -82,8 +82,7 @@ def calc_prob(peptide, bg_dist,  motif_dists):
     else:#impossible to have a motif of this length, all b/g
         prob = 0.0
         for i in range(length):
-            for k in range(NUM_MOTIF_CLASSES):
-                prob+=bg_dist[peptide[i]]
+            prob += bg_dist[peptide[i]]
     prob /= float(length)
     return(prob)
 

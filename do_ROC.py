@@ -33,16 +33,18 @@ for i in range(int(min_num_clusters), int(max_num_clusters)+1):
             
     print("Best index = {}, FPR = {}, TPR = {}, with {} clusters".format(best_idx, fpr_arr[best_idx], tpr_arr[best_idx], i))
 
-    plotname = dirname + "/{}_cluster_ROC.png".format(i)
+    plotname = dirname + "/{}_cluster_ROC.".format(i)
     plt.figure()
     plt.xlabel('FPR')
     plt.ylabel('TPR')
-    plt.title('ROC Curve')
+    plt.title('{} Clusters ROC Curve'.format(i))
     plt.plot(fpr_arr[:-1], tpr_arr[:-1], 'o', label='ROC at varied cutoffs', color='red')
     plt.plot(fpr_arr[best_idx], tpr_arr[best_idx], 's', label='Best cutoff', color='blue')
     plt.plot(fpr_arr, fpr_arr, label='totally random', ls=':', color='black')
     plt.legend(loc='best')
-    plt.savefig(plotname)
+    plt.savefig(plotname+'png', dpi=300)
+    plt.savefig(plotname+'pdf', dpi=300)
+    plt.savefig(plotname+'svg', dpi=300)
 
     best_tpr = tpr_arr[best_idx]
     best_fpr = fpr_arr[best_idx]

@@ -4,7 +4,7 @@ import sys
 import math
 
 def printhelp():
-    print("Usage: do_gibbs_ROC.py [root_directory] [num_classes] [motif_length]")
+    print("Usage: plot_motif_dists.py [root_directory] [num_classes] [motif_length]")
     exit(1)
 
 if len(sys.argv) != 4:
@@ -27,6 +27,7 @@ for i in range(NUM_MOTIF_CLASSES):
         plt.title('Class {} of {} Position {} Motif Distribution'.format(i+1, NUM_MOTIF_CLASSES, j+1))
         plt.xlabel('Amino Acid')
         plt.ylabel('Probability')
+        plt.ylim(0, 1.0)
         x_axis = list(range(len(ALPHABET)))
         histo = np.genfromtxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(DIRNAME, i, NUM_MOTIF_CLASSES, j))
         plt.bar(x_axis, histo)

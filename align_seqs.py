@@ -6,6 +6,7 @@ from sklearn import svm
 from sklearn.metrics import roc_curve
 from matplotlib import pyplot as plt
 import math
+import regex as re
 
 def printhelp():
     print("Usage: align_seqs.py [root_directory] [num_classes] [motif_length]")
@@ -35,11 +36,19 @@ def pep_to_int_list(pep):
     '''takes a single string of amino acids and translates to a list of ints'''
     return(list(map(ALPHABET.index, pep.replace('\n', ''))))
 
+def int_list_to_pep(int_list):
+    '''takes a list of AA indices and returns the string it corresponds to'''
+    ret = ''
+    for item in int_list:
+        ret += (ALPHABET[item])
+    return(ret)
+
 def read_data(trainfile, testfile):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
        and reads it into a list.'''
     train_data = {}#dict keyed by peptide length containing the sequences
     test_data = {}
+    peptide_strings = {}
     big_aa_string = ''#for training the whole background distro
     with open(trainfile, 'r') as f:
         lines = f.readlines()
@@ -53,6 +62,10 @@ def read_data(trainfile, testfile):
                 train_data[length] = [(pep_to_int_list(pep))]
             else:
                 train_data[length].append((pep_to_int_list(pep)))
+            if(length not in peptide_strings.keys()):
+                peptide_strings[length] = [pep]
+            else:
+                peptide_strings[length].append(pep)
     with open(testfile, 'r') as f:
         lines = f.readlines()
         nlines = len(lines)
@@ -65,8 +78,12 @@ def read_data(trainfile, testfile):
                 test_data[length] = [(pep_to_int_list(pep))]
             else:
                 test_data[length].append((pep_to_int_list(pep)))
+            if(length not in peptide_strings.keys()):
+                peptide_strings[length] = [pep]
+            else:
+                peptide_strings[length].append(pep)
     big_aa_list = pep_to_int_list(big_aa_string)
-    return(train_data, test_data, big_aa_list)
+    return(train_data, test_data, big_aa_list, peptide_strings)
 
 def calc_prob(peptide, bg_dist,  motif_dists, motif_start=None):
     '''For use when we're OUTSIDE the model, gives prob with the motif starting at a specified
@@ -106,7 +123,7 @@ def calc_prob(peptide, bg_dist,  motif_dists, motif_start=None):
     return(prob)
 
 
-test_data, train_data, all_apd_aa = read_data(TRAINFILE, TESTFILE)
+test_data, train_data, all_apd_aa, all_apd_strings = read_data(TRAINFILE, TESTFILE)
 
 test_keys = test_data.keys()
 train_keys = train_data.keys()
@@ -118,34 +135,70 @@ for i in range(NUM_MOTIF_CLASSES):
         motif_dists[i][j] = np.genfromtxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(DIRNAME,i,NUM_MOTIF_CLASSES, j))
 
 bg_dist = np.genfromtxt('{}/bg_dist.txt'.format(DIRNAME))
-
+p
 #now that we've recovered the distros, time to DO THE ROC CALCULATIONS!
 
 print("NUMBER OF MOTIFS: {}".format(NUM_MOTIF_CLASSES))
 print("MOTIF LENGTH: {}".format(MOTIF_LENGTH))
 
 print("CALCULATING PROBABILITIES...")
-starts_dict = {}
+test_starts_probs_dict = {}
+train_starts_probs_dict = {}
 
 for key in test_keys:
     for i in range(len(test_data[key])):
-        if(key in starts_dict.keys()):
-            starts_dict[key].append([(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)])
+        if(key in test_starts_probs_dict.keys()):
+            test_starts_probs_dict[key].append([(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)])
         else:
-            starts_dict[key] = [[(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)]]
+            test_starts_probs_dict[key] = [[(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)]]
 
 for key in train_keys:
     for i in range(len(train_data[key])):
-        if(key in starts_dict.keys()):
-            starts_dict[key].append([(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)])
+        if(key in train_starts_probs_dict.keys()):
+            train_starts_probs_dict[key].append([(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)])
         else:
-            starts_dict[key] = [[(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)]]
-
-        
-#time to plot stuff!
+            train_starts_probs_dict[key] = [[(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)]]
 
 
+#get the most probable start for each of these peptides.
+test_starts_dict = {}
+train_starts_dict = {}
+for key in test_starts_probs_dict:
+    test_starts_dict[key] = [np.argmax(item) for item in test_starts_probs_dict[key]]
+    
+for key in train_starts_probs_dict:
+    train_starts_dict[key] = [np.argmax(item) for item in train_starts_probs_dict[key]]
 
 
+#now we find the actual sequences that appear in each of those places.
+test_seqs_dict = {}
+train_seqs_dict = {}
 
+for key in test_starts_dict:
+    test_seqs_dict[key] = [test_data[key][i][test_starts_dict[key][i]:test_starts_dict[key][i]+MOTIF_LENGTH] for i in range(len(test_starts_dict[key]))]
+for key in train_starts_dict:
+    train_seqs_dict[key] = [train_data[key][i][train_starts_dict[key][i]:train_starts_dict[key][i]+MOTIF_LENGTH] for i in range(len(train_starts_dict[key]))]
 
+for key in test_starts_dict:
+    test_seqs_dict[key] = [int_list_to_pep(item) for item in test_seqs_dict[key]]
+for key in train_starts_dict:
+    train_seqs_dict[key] = [int_list_to_pep(item) for item in train_seqs_dict[key]]
+
+#now see if the motifs match up
+
+with open(DIRNAME + '/motif_lists.txt', 'r') as f:
+    lines = f.readlines()
+lines = [item.replace('\n','') for item in lines]
+predicted_motif_strings = [lines[2*i+1] for i in range(NUM_MOTIF_CLASSES)]
+counts = [0 for item in predicted_motif_strings]
+
+for i in range(len( predicted_motif_strings)):
+    for key in test_seqs_dict:
+        for item in test_seqs_dict[key]:
+            if(len(re.findall(predicted_motif_strings[i], item)) > 0):
+                counts[i] += 1
+    for key in train_seqs_dict:
+        for item in train_seqs_dict[key]:
+            if(len(re.findall(predicted_motif_strings[i], item)) > 0):
+                counts[i] += 1
+#need to process the counts now, etc.

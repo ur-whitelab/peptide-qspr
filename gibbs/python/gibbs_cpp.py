@@ -14,25 +14,25 @@ import sys
 
 
 def printhelp():
-    print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [alpha] [random_draws_per_step (default 0)]")
+    print("Usage: gibbs_cpp.py [test_peptides_file] [num_classes] [motif_length] [num_iterations] [alpha] [random_draws_per_step (default 0)]")
     exit(1)
 
-if len(sys.argv) != 5 and len(sys.argv) != 6:
+if len(sys.argv) != 6 and len(sys.argv) != 7:
     printhelp()
 
-INPUT = sys.argv[1]
-NUM_MOTIF_CLASSES = int(sys.argv[2]) #one class for which letter the motif starts with? why not try
-NRUNS = int(sys.argv[3])
-ALPHA = float(sys.argv[4])
-if(len(sys.argv) == 6):
-    NUM_RANDOM_DRAWS = int(sys.argv[5])
+INPUT = sys.argv[1] #the location of the file with 'true' peptides
+NUM_MOTIF_CLASSES = int(sys.argv[2]) #number of motif classes
+MOTIF_LENGTH = int(sys.argv[3]) #how long motifs are
+NRUNS = int(sys.argv[4]) #max number of training steps
+ALPHA = float(sys.argv[5]) #alpha param
+if(len(sys.argv) == 7):
+    NUM_RANDOM_DRAWS = int(sys.argv[6]) #the random observation noise 'magnitude'
 else:
-    NUM_RANDOM_DRAWS = 0
+    NUM_RANDOM_DRAWS = 0 #no noise by default
 
 
 #CONSTANTS
-MOTIF_LENGTH = 3 #fixed motif lengths, for now
-HOMEDIR = '.'
+HOMEDIR = '/home/rbarret8/pymc3_qspr/gibbs/python/build'
 
 ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
             'L','K','M','F','P','S','T','W','Y','V']
@@ -184,9 +184,12 @@ outpath = '{}/gpos_{}_classes_length_{}'.format(HOMEDIR, NUM_MOTIF_CLASSES, MOTI
 if not(os.path.exists(outpath)):
     os.makedirs(outpath)
 
+plt.rcParams.update({'font.size': 7})
+
+    
 for i in range(NUM_MOTIF_CLASSES):
     for j in range(MOTIF_LENGTH):
-        fig = plt.figure()
+        fig = plt.figure(figsize = (2.5, 2.0), dpi=800)
         plt.xlabel('Amino Acid')
         plt.ylabel('Relative Frequency')
         plt.title('position {} in motif class {}'.format(j,i))
@@ -196,7 +199,7 @@ for i in range(NUM_MOTIF_CLASSES):
         plt.close(fig)
         np.savetxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(outpath, i, NUM_MOTIF_CLASSES, j), new_motif_dists[i][j])
 
-fig = plt.figure()
+fig = plt.figure(figsize = (2.5, 2.0), dpi=800)
 plt.xlabel('Amino Acid')
 plt.ylabel('Relative Frequency')
 plt.title('Background Distribution')
@@ -214,24 +217,24 @@ for key in train_data.keys():
     collapsed_class_dists[key] = np.sum(motif_class_dists[key], axis=0) / np.sum(motif_class_dists[key])
 
 for key in train_data.keys():
-    '''fig = plt.figure()
+    fig = plt.figure(figsize = (2.5, 2.0), dpi=800)
     plt.xlabel('Start Position')
     plt.ylabel('Relative Frequency')
     plt.title('Motif Length {} Start Position Histogram for Length {}'.format(MOTIF_LENGTH, key))
     plt.bar(range(key-MOTIF_LENGTH+1), collapsed_start_dists[key])
     plt.savefig('{}/motif_length_{}_length_{}_start_dist.png'.format(outpath, MOTIF_LENGTH, key))
-    plt.close(fig)'''
+    plt.close(fig)
     np.savetxt('{}/motif_length_{}_length_{}_start_dist.txt'.format(outpath, MOTIF_LENGTH, key), collapsed_start_dists[key])
 
 for key in train_data.keys():
     for i in range(len(train_data[key])):
-        '''fig = plt.figure()
+        fig = plt.figure(figsize = (2.5, 2.0), dpi=800)
         plt.xlabel('Motif Class')
         plt.ylabel('Relative Probability')
         plt.title('Motif Length {} Motif Class Histogram for Length {} Index {}'.format(MOTIF_LENGTH, key, i))
         plt.bar(range(NUM_MOTIF_CLASSES), motif_class_dists[key][i])
         plt.savefig('{}/motif_length_{}_length_{}_index_{}_class_dist.png'.format(outpath, MOTIF_LENGTH, key, i))
-        plt.close(fig)'''
+        plt.close(fig)
         np.savetxt('{}/motif_length_{}_length_{}_index_{}_class_dist.txt'.format(outpath, MOTIF_LENGTH, key, i), motif_class_dists[key][i])
 
 with open('{}/info.txt'.format(outpath), 'w+') as f:

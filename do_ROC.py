@@ -33,18 +33,20 @@ for i in range(int(min_num_clusters), int(max_num_clusters)+1):
             
     print("Best index = {}, FPR = {}, TPR = {}, with {} clusters".format(best_idx, fpr_arr[best_idx], tpr_arr[best_idx], i))
 
-    plotname = dirname + "/{}_cluster_ROC.".format(i)
-    plt.figure()
-    plt.xlabel('FPR')
-    plt.ylabel('TPR')
-    plt.title('{} Clusters ROC Curve'.format(i))
-    plt.plot(fpr_arr[:-1], tpr_arr[:-1], 'o', label='ROC at varied cutoffs', color='red')
-    plt.plot(fpr_arr[best_idx], tpr_arr[best_idx], 's', label='Best cutoff', color='blue')
-    plt.plot(fpr_arr, fpr_arr, label='totally random', ls=':', color='black')
-    plt.legend(loc='best')
-    plt.savefig(plotname+'png', dpi=300)
-    plt.savefig(plotname+'pdf', dpi=300)
-    plt.savefig(plotname+'svg', dpi=300)
+    plotname = dirname + "/{}_cluster_NEW_ROC.".format(i)
+    plt.rcParams.update({'font.size': 7})
+    plt.figure(figsize = (2.5, 2.0), dpi=800)
+    plt.xlabel('FPR')#, labelpad=-12)
+    plt.ylabel('TPR')#, labelpad=-18)
+    #plt.title('{} Clusters ROC Curve'.format(i))
+    plt.plot(fpr_arr[:-1], tpr_arr[:-1], 'o', label='ROC at varied cutoffs', color='red', lw=2.0, ms=2.0)
+    plt.plot(fpr_arr[best_idx], tpr_arr[best_idx], 's', label='Best cutoff', color='blue', lw=2.0, ms=2.0)
+    plt.plot(fpr_arr, fpr_arr, label='totally random', ls=':', color='black', lw=2.0, ms=2.0)
+    plt.legend(loc='best', fontsize='small')
+    plt.tight_layout()
+    plt.savefig(plotname+'png')
+    plt.savefig(plotname+'pdf')
+    plt.savefig(plotname+'svg')
 
     best_tpr = tpr_arr[best_idx]
     best_fpr = fpr_arr[best_idx]

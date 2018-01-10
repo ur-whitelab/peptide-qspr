@@ -113,7 +113,7 @@ def gen_roc_data(npoints, roc_min, roc_max, fakes,
     old_dist = 2.0
     for i in range(npoints):
         dist = math.sqrt(2.0 * fpr_arr[i] **2 + (1-tpr_arr[i]) **2)
-        if (old_dist > dist):
+        if (old_dist > dist and not (i==0 or i==NPOINTS-1)):
             best_idx = i
             old_dist = dist
     best_cutoff = roc_range[best_idx]
@@ -184,17 +184,19 @@ CUTOFF, BEST_IDX = gen_roc_data(NPOINTS, roc_min, roc_max, fake_probs_arr, train
 print("best cutoff value: {}".format(CUTOFF))
 print("using {} as our cutoff, we achieved an FPR of {} and a TPR of {}".format(CUTOFF, FPR_ARR[BEST_IDX], TPR_ARR[BEST_IDX]))
 
-plt.figure()
-plt.xlabel('FPR')
-plt.ylabel('TPR')
-plt.title('ROC Curve')
-plt.plot(FPR_ARR[:-1], TPR_ARR[:-1], 'o', label='ROC at varied cutoffs', color='red')
-plt.plot(FPR_ARR[BEST_IDX], TPR_ARR[BEST_IDX], 's', label='Best cutoff', color='blue')
-plt.plot(FPR_ARR, FPR_ARR, label='totally random', ls=':', color='black')
-plt.legend(loc='best')
-
+plt.rcParams.update({'font.size': 7})
+plt.figure(figsize = (2.5, 2.0), dpi=800)
+plt.xlabel('FPR')#, labelpad=-12)
+plt.ylabel('TPR')#, labelpad=-18)
+#plt.title('ROC Curve')
+plt.plot(FPR_ARR[:-1], TPR_ARR[:-1], 'o', label='ROC at varied cutoffs', color='red', lw=2.0, ms=2.0)
+plt.plot(FPR_ARR[BEST_IDX], TPR_ARR[BEST_IDX], 's', label='Best cutoff', color='blue', lw=2.0, ms=2.0)
+plt.plot(FPR_ARR, FPR_ARR, label='totally random', ls=':', color='black', lw=2.0, ms=2.0)
+plt.legend(loc='best', fontsize='small')
+plt.tight_layout()
 plt.savefig('{}/{}_motifs_length_{}_ROC.png'.format(DIRNAME, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
 plt.savefig('{}/{}_motifs_length_{}_ROC.svg'.format(DIRNAME, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
+plt.savefig('{}/{}_motifs_length_{}_ROC.pdf'.format(DIRNAME, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
 
 print("SAVING STATISTICS...")
 best_tpr = TPR_ARR[BEST_IDX]

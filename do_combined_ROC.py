@@ -78,7 +78,7 @@ def read_data(trainfile, testfile):
             else:
                 test_data[length].append((pep_to_int_list(pep)))
     big_aa_list = pep_to_int_list(big_aa_string)
-    return(test_peptides, train_peptides, train_data, test_data, big_aa_list)
+    return(test_peptides, train_peptides, test_data, train_data, big_aa_list)
 
 def calc_prob(peptide, bg_dist,  motif_dists):
     '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
@@ -110,19 +110,27 @@ def calc_positives(arr, cutoff):
         return(0)
 
 def gen_roc_data(npoints, fpr_arr, tpr_arr, roc_min, roc_max, fakes,
-                 trains, tests):
+                 trains, tests, only_tests=False):
     '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,
-       the second is the TPR. The number of points is npoints. Returns (FPR_arr, TPR_arr).'''
+       the second is the TPR. The number of points is npoints. 
+       Returns (accuracy, best_index, best_cutoff) as a tuple. 
+    Works in-place on fpr_arr and tpr_arr.'''
     best_cutoff = 0.0
     best_ROC = 0.0
     roc_range = np.linspace(roc_min, roc_max, npoints)
     #for each cutoff value, calculate the FPR and TPR
     for i in range(npoints):
-        fakeset_positives = calc_positives(fakes, roc_range[i])
-        fpr_arr[i] = float(fakeset_positives) / len(fakes)
-        test_positives =  calc_positives(tests, roc_range[i])
-        train_positives = calc_positives(trains, roc_range[i])
-        tpr_arr[i] = float(train_positives + test_positives) / (len(trains) + len(tests) )
+        if(not only_tests):
+            fakeset_positives = calc_positives(fakes, roc_range[i])
+            fpr_arr[i] = float(fakeset_positives) / len(fakes)
+            test_positives =  calc_positives(tests, roc_range[i])
+            train_positives = calc_positives(trains, roc_range[i])
+            tpr_arr[i] = float(train_positives + test_positives) / (len(trains) + len(tests) )
+        else:
+            fakeset_positives = calc_positives(fakes, roc_range[i])
+            fpr_arr[i] = float(fakeset_positives) / len(fakes)
+            test_positives =  calc_positives(tests, roc_range[i])
+            tpr_arr[i] = float(test_positives) / (len(tests) )
     best_idx = 0
     old_dist = 2.0
     for i in range(0,npoints):
@@ -172,14 +180,14 @@ fake_gibbs_probs = []
 for pep in test_peps:
     prob = 0.0
     for key in keys:
-        prob += get_hist_prob(bins[key], counts[key], GPOS_DATA.loc[GPOS_DATA['sequence'] == pep][key].iloc[0])/3.0
+        prob += get_hist_prob(bins[key], counts[key], GPOS_DATA.loc[GPOS_DATA['sequence'] == pep][key].iloc[0])/len(keys)
     test_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists))
     test_gauss_probs.append(prob)
 
 for pep in train_peps:
     prob = 0.0
     for key in keys:
-        prob += get_hist_prob(bins[key], counts[key], GPOS_DATA.loc[GPOS_DATA['sequence'] == pep][key].iloc[0])/3.0
+        prob += 100.0 * get_hist_prob(bins[key], counts[key], GPOS_DATA.loc[GPOS_DATA['sequence'] == pep][key].iloc[0])/len(keys)
     train_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists))
     train_gauss_probs.append(prob)
 
@@ -187,29 +195,11 @@ for i in range(len(FAKE_DATA['sequence'])):
     prob = 0.0
     pep = FAKE_DATA['sequence'].iloc[i]
     for key in keys:
-        prob += get_hist_prob(bins[key], counts[key], FAKE_DATA[key].iloc[i])/3.0
+        prob += get_hist_prob(bins[key], counts[key], FAKE_DATA[key].iloc[i])/len(keys)
     fake_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists))
     fake_gauss_probs.append(prob)
 
 #divide each prob arr by the most likely prob to compare
-#lowest_gibbs =  min( min(test_gibbs_probs), min(train_gibbs_probs), min(fake_gibbs_probs) )
-#lowest_gauss = min( min(test_gauss_probs), min(train_gauss_probs), min(fake_gauss_probs) )
-#test_gibbs_probs -= lowest_gibbs
-#train_gibbs_probs -= lowest_gibbs
-#fake_gibbs_probs -= lowest_gibbs
-#test_gauss_probs -= lowest_gauss
-#train_gauss_probs -= lowest_gauss
-#fake_gauss_probs -= lowest_gauss
-biggest_gibbs = max( max(test_gibbs_probs), max(train_gibbs_probs), max(fake_gibbs_probs) )
-biggest_gauss = max( max(test_gauss_probs), max(train_gauss_probs), max(fake_gauss_probs) )
-
-test_gibbs_probs /= biggest_gibbs
-train_gibbs_probs /= biggest_gibbs
-fake_gibbs_probs /= biggest_gibbs
-test_gauss_probs /= biggest_gauss
-train_gauss_probs /= biggest_gauss
-fake_gauss_probs /= biggest_gauss
-
 test_gibbs_probs = np.array(test_gibbs_probs)
 train_gibbs_probs = np.array(train_gibbs_probs)
 fake_gibbs_probs = np.array(fake_gibbs_probs)
@@ -217,6 +207,24 @@ test_gauss_probs = np.array(test_gauss_probs)
 train_gauss_probs = np.array(train_gauss_probs)
 fake_gauss_probs = np.array(fake_gauss_probs)
 
+lowest_gibbs =  min( np.min(test_gibbs_probs), np.min(train_gibbs_probs), np.min(fake_gibbs_probs) )
+lowest_gauss = min( np.min(test_gauss_probs), np.min(train_gauss_probs), np.min(fake_gauss_probs) )
+biggest_gibbs = max( np.max(test_gibbs_probs), np.max(train_gibbs_probs), np.max(fake_gibbs_probs) )
+biggest_gauss = max( np.max(test_gauss_probs), np.max(train_gauss_probs), np.max(fake_gauss_probs) )
+
+#test_gibbs_probs -= lowest_gibbs
+#train_gibbs_probs -= lowest_gibbs
+#fake_gibbs_probs -= lowest_gibbs
+#test_gauss_probs -= lowest_gauss
+#train_gauss_probs -= lowest_gauss
+#fake_gauss_probs -= lowest_gauss
+
+#test_gibbs_probs /= biggest_gibbs
+#train_gibbs_probs /= biggest_gibbs
+#fake_gibbs_probs /= biggest_gibbs
+#test_gauss_probs /= biggest_gauss
+#train_gauss_probs /= biggest_gauss
+#fake_gauss_probs /= biggest_gauss
 
 '''Now that the prob arrays are comparable magnitudes, we iterate through weights from 0.0 to 1.0
 assigned to either one, and get our ROC for each weight, then we see which weighting is best and record that accuracy'''
@@ -244,12 +252,27 @@ optimal_weight = -1
 print("CALCULATING ROC DATA, FINDING BEST WEIGHTING...")
 
 for i in range(len(weights)):
-    roc_fake_probs = weights[i] * fake_gibbs_probs + (1.0 - weights[i]) * fake_gauss_probs
-    roc_train_probs = weights[i] * train_gibbs_probs + (1.0 - weights[i]) * train_gauss_probs
-    roc_test_probs = weights[i] * test_gibbs_probs + (1.0 - weights[i]) * test_gauss_probs
+    if(i == 0):
+        roc_fake_probs = fake_gauss_probs
+        roc_train_probs = train_gauss_probs
+        roc_test_probs = test_gauss_probs
+    elif(i == len(weights) -1 ):
+        roc_fake_probs = fake_gibbs_probs
+        roc_train_probs = train_gibbs_probs
+        roc_test_probs = test_gibbs_probs
+    else:
+        roc_fake_probs = (1.0 - weights[i]) * (fake_gauss_probs - lowest_gauss)/biggest_gauss + weights[i] * (fake_gibbs_probs - lowest_gibbs)/biggest_gibbs
+        roc_train_probs = (1.0 - weights[i]) * (train_gauss_probs - lowest_gauss)/biggest_gauss + weights[i] * (train_gibbs_probs - lowest_gibbs)/biggest_gibbs
+        roc_test_probs = (1.0 - weights[i]) * (test_gauss_probs - lowest_gauss)/biggest_gauss + weights[i] * (test_gibbs_probs - lowest_gibbs)/biggest_gibbs
+        #roc_train_probs = (1.0 - weights[i]) * train_gauss_probs + weights[i] * train_gibbs_probs
+        #roc_test_probs = (1.0 - weights[i]) *  test_gauss_probs +weights[i] * test_gibbs_probs
+    roc_fake_probs, roc_train_probs, roc_test_probs = np.array(roc_fake_probs), np.array(roc_train_probs), np.array(roc_test_probs)
+    #roc_fake_probs =  weights[i] * fake_gauss_probs + (1.0 - weights[i]) * fake_gibbs_probs
+    #roc_train_probs = weights[i] * train_gauss_probs + (1.0 - weights[i]) *  train_gibbs_probs
+    #roc_test_probs = weights[i] * test_gauss_probs + (1.0 - weights[i]) * test_gibbs_probs
     roc_min = min(np.min(roc_train_probs), np.min(roc_test_probs), np.min(roc_fake_probs))
     roc_max = max(np.max(roc_train_probs), np.max(roc_test_probs), np.max(roc_fake_probs))
-    accuracy, best_idx, best_cutoff = gen_roc_data(NPOINTS, fpr_arr, tpr_arr, roc_min, roc_max, roc_fake_probs, roc_train_probs, roc_test_probs)
+    accuracy, best_idx, best_cutoff = gen_roc_data(NPOINTS, fpr_arr, tpr_arr, roc_min, roc_max, roc_fake_probs, roc_train_probs, roc_test_probs, only_tests=False)
     best_fprs_arr[i] = fpr_arr[best_idx]
     best_tprs_arr[i] = tpr_arr[best_idx]
     best_accs_arr[i] = accuracy
@@ -260,28 +283,38 @@ for i in range(len(weights)):
         optimal_best_idx = best_idx
         optimal_weight = weights[i]
 
-    
-plt.figure()
-plt.title('Statistics as Weighting Varies')
-plt.xlabel('Weight Assigned to Motifs')
+with open('{}/{}_clusters_{}_motifs_length_{}_combined_statistics_log.txt'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH), 'w+') as f:
+    f.write('Optimal TPR: {:.4}%\n'.format(optimal_tpr_arr[optimal_best_idx]))
+    f.write('Optimal FPR: {:.4}%\n'.format(optimal_fpr_arr[optimal_best_idx]))
+    f.write('Optimal Accuracy: {:.4}%\n'.format(optimal_acc))
+    f.write('Optimal Motif Weight: {:.4}%\n'.format(optimal_weight))
+    f.write('Optimal QSPR Weight: {:.4}%\n'.format(1.0 - optimal_weight))
+        
+plt.rcParams.update({'font.size': 7})
+plt.figure(figsize = (2.5, 2.0), dpi = 800)
+#plt.title('Statistics as Weight Varies')
+plt.xlabel('Weight Assigned to Motifs')#, labelpad=-21)
 plt.ylabel('Fraction')
-plt.grid(color='grey', linestyle='--')
-plt.plot(weights, best_fprs_arr, 'o', color = 'red', ls='--', label='FPR')
-plt.plot(weights, best_tprs_arr, 'o', color = 'green', ls='--',label='TPR')
-plt.plot(weights, best_accs_arr, 'o', color='blue', ls='--',label='Accuracy')
-plt.legend(loc='best')
+#plt.grid(color='grey', linestyle='--')
+plt.ylim(0.7,1.0)
+#plt.plot(weights, best_fprs_arr, 'o', color = 'red', ls='--', label='FPR', lw=2.0, ms=2.0)
+#plt.plot(weights, best_tprs_arr, 'o', color = 'green', ls='--',label='TPR', lw=2.0, ms=2.0)
+plt.plot(weights, best_accs_arr, 'o', color='blue', ls='-',label='Accuracy', lw=2.0, ms=2.0)
+plt.legend(loc='best', fontsize='small')
+plt.tight_layout()
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_combined_statistics.svg'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_combined_statistics.pdf'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_combined_statistics.png'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
 
 
-plt.figure()
-plt.title('Optimal ROC Curve')
-plt.xlabel('FPR')
-plt.ylabel('TPR')
-plt.plot(optimal_fpr_arr[:-2], optimal_tpr_arr[:-2], 'o', color='red',label='ROC at varied cutoffs')
-plt.plot(optimal_fpr_arr[optimal_best_idx], optimal_tpr_arr[optimal_best_idx], 's', color='blue', label='Optimal Cutoff')
+plt.figure(figsize = (2.5, 2.0), dpi = 800)
+#plt.title('Optimal ROC Curve')
+plt.xlabel('FPR')#, labelpad = -12)
+plt.ylabel('TPR')#, labelpad = -18)
+plt.plot(optimal_fpr_arr[:-2], optimal_tpr_arr[:-2], 'o', color='red',label='ROC at varied cutoffs',lw=2.0, ms=2.0)
+plt.plot(optimal_fpr_arr[optimal_best_idx], optimal_tpr_arr[optimal_best_idx], 's', color='blue', label='Optimal Cutoff',lw=2.0, ms=2.0)
 plt.plot(optimal_fpr_arr,optimal_fpr_arr, color='black', ls=':', label='Totally Random')
+plt.tight_layout()
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.svg'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.png'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.pdf'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))

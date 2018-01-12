@@ -2,6 +2,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 import sys
 
+def printHelp():
+    print("Usage: do_stats.py [target_directory] [min_num_hills] [max_num_hills]")
+    exit(1)
+
+if(len(sys.argv) != 4):
+    printHelp()
+
 directory = sys.argv[1]
 min_num_hills = int(sys.argv[2])
 max_num_hills = int(sys.argv[3])
@@ -16,8 +23,8 @@ for i in range(min_num_hills, max_num_hills+1):
         tpr_arr.append(lines[2].split()[2])
         accuracy_arr.append(lines[3].split()[1])
 
-plt.figure()
-plt.title('Statistics for Various Kernel Numbers')
+plt.rcParams.update({'font.size': 7})
+plt.figure(figsize = (2.5, 2.0), dpi=800)
 plt.xlabel('Number of Gaussian Kernels')
 plt.ylabel('Fraction')
 plt.grid(color='grey', linestyle='--')

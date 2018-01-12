@@ -5,7 +5,7 @@ import math
 import sys
 
 def printHelp():
-    print("do_ROC.py [file_locations] [min_number_clusters] [max_number_clusters] [weight_for_FPR_dist]")
+    print("Usage: do_gauss_ROC.py [file_locations] [min_number_clusters] [max_number_clusters] [weight_for_FPR_dist]")
 
 if len(sys.argv) is not 5:
     printHelp()

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import sys
-
+from qspr_plots import *
 
 def printHelp():
     print("APD_gaussmix.py [QSPR_dirname] [APD_filename] [job] [fake_data_file] [NUM_CLUSTERS] [ROC_plot_filename] [optional:motif_file_to_test]")
@@ -134,15 +134,6 @@ for key in occurrence_histograms.keys():
     np.savetxt('{}/data/gaussmix/{}_clusters_{}.hist'.format( homedir, NUM_CLUSTERS, key), occurrence_histograms[key][0])
     np.savefig('{}/data/gaussmix/{}_clusters_{}.bins'.format( homedir, NUM_CLUSTERS, key), occurrence_histograms[key][1])
 
-def get_hist_prob(histogram, value):
-    '''takes in a NORMALIZED numpy.histogram() and a value, returns the height of the bin that
-        value falls into. There must be a better way to do this???'''
-    idx = np.argmax(histogram[1] > value)
-    if idx==0:
-        return(0)
-    else:
-        return(histogram[0][idx-1]/NSAMPLES)
-
 #Now that we can get the histogram height given a single value as input, 
 # we just need to loop through our devset and for each single peptide, get the total probability,
 # which is just 1/N_DESCRIPTORS * (sum_over_descriptor_probs)
@@ -150,11 +141,15 @@ def get_hist_prob(histogram, value):
 devset_probs = np.zeros(len(devsets['dev_nHBAcc']))
 trainset_probs = np.zeros(len(trainsets['train_nHBAcc'])) #to see what the probs are like on these
 for key in keys[1:]:
+    bins = occurrence_histograms['{}_observed'.format(key)][1]
+    counts = occurrence_histograms['{}_observed'.format(key)][0]
     for i in range(len(devset_probs)):
-        devset_probs[i] += get_hist_prob(occurrence_histograms['{}_observed'.format(key)],
-                                         float(devsets['dev_{}'.format(key)][i]))    
+        devset_probs[i] += get_hist_prob(bins, counts,
+                                         float(devsets['dev_{}'.format(key)][i]))
+    bins = occurrence_histograms['{}_observed'.format(key)][1]
+    counts = occurrence_histograms['{}_observed'.format(key)][0]
     for i in range(len(trainset_probs)):
-        trainset_probs[i] += get_hist_prob(occurrence_histograms['{}_observed'.format(key)],
+        trainset_probs[i] += get_hist_prob(bins, counts,
                                          float(trainsets['train_{}'.format(key)][i]))
 devset_probs /= len(devsets)
 trainset_probs /= len(trainsets)
@@ -189,8 +184,10 @@ print(len(fakesets['nHBAcc']))
 
 fakeset_probs = np.zeros(len(fakesets['nHBAcc']))
 for key in keys[1:]:
+    bins = occurrence_histograms['{}_observed'.format(key)][1]
+    counts = occurrence_histograms['{}_observed'.format(key)][0]
     for i in range(len(fakeset_probs)):
-        fakeset_probs[i] += get_hist_prob(occurrence_histograms['{}_observed'.format(key)],
+        fakeset_probs[i] += get_hist_prob(bins, counts,
                                          float(fakesets['{}'.format(key)][i])) 
 fakeset_probs /= len(devsets)
 
@@ -286,8 +283,10 @@ print(len(motifsets['nHBAcc']))
 
 motifset_probs = np.zeros(len(motifsets['nHBAcc']))
 for key in keys[1:]:
+    bins = occurrence_histograms['{}_observed'.format(key)][1]
+    counts = occurrence_histograms['{}_observed'.format(key)][0]
     for i in range(len(motifset_probs)):
-        motifset_probs[i] += get_hist_prob(occurrence_histograms['{}_observed'.format(key)],
+        motifset_probs[i] += get_hist_prob(bins, counts,
                                          float(motifsets['{}'.format(key)][i])) 
 motifset_probs /= len(devsets)
 

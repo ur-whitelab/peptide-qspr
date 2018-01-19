@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import sys
 import math
+from qspr_plots import *
 
 def printhelp():
     print("Usage: do_gibbs_ROC.py [root_directory] [num_classes] [motif_length]")
@@ -26,12 +27,6 @@ with open(fakefile, 'r') as datafile:
 for i in range(len(fake_data)) :
     fake_data[i] = fake_data[i].replace('\n', '')
 
-
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep.replace('\n', ''))))
 
 def read_data(trainfile, testfile):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
@@ -67,7 +62,7 @@ def read_data(trainfile, testfile):
     return(train_data, test_data, big_aa_list)
 
 def calc_prob(peptide, bg_dist,  motif_dists):
-    '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
+    '''For use when we're OUTSIDE the model, for geinerating ROC data and the like.'''
     length = len(peptide)
     if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
         start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists

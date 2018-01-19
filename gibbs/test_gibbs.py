@@ -5,6 +5,7 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 import pdb
 import sys
+from qspr_plots import *
 
 def printhelp():
     print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [learning_rate]")
@@ -22,14 +23,8 @@ ETA = float(sys.argv[4])
 #CONSTANTS
 MOTIF_LENGTH = 4 #fixed motif lengths, for now
 
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
 DATA_DIR = '/home/rainier/pymc3_qspr/data/'
 fakefile = DATA_DIR + 'pdb_distributed_apd_length_peps.txt'
-
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep)))
 
 def read_data(datafile, motif_file=None):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)

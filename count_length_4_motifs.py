@@ -14,9 +14,6 @@ DIRNAME = sys.argv[1]
 NUM_MOTIF_CLASSES = int(sys.argv[2])
 MOTIF_LENGTH = int(sys.argv[3])
     
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
-
 TRAINFILE = DIRNAME + 'train_set.txt'
 TESTFILE = DIRNAME + 'test_set.txt'
 
@@ -34,10 +31,6 @@ motif_dists = np.ones((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET))) / float(
 for i in range(NUM_MOTIF_CLASSES):
     for j in range(MOTIF_LENGTH):
         motif_dists[i][j] = np.genfromtxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(DIRNAME,i,NUM_MOTIF_CLASSES, j))
-
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep.replace('\n', ''))))
 
         
 def calc_prob(peptide, bg_dist,  motif_dists, motif_class=None):

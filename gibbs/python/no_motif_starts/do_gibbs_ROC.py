@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import sys
+from qspr_plots import *
 
 def printhelp():
     print("Usage: do_gpos_gibbs_ROC.py [gpos_peptides_file] [root_directory] [num_classes] [motif_length]")
@@ -22,12 +23,6 @@ with open(fakefile, 'r') as datafile:
 for line in fake_data:
     line = line.replace('\n', '')
 
-
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep.replace('\n', ''))))
 
 def read_data(datafile):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)

@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import sys
 import math
 import copy
+from qspr_plots import *
 
 def printhelp():
     print("Usage: do_combined_ROC.py [gaussmix_directory] [num_gauss_clusters] [gauss_ROC_distance_weight] [gibbs_directory] [num_motif_classes] [motif_length]")
@@ -26,22 +27,6 @@ FAKE_DATA = pd.read_csv(FAKEFILE)
 HUMANFILE = DATA_DIR + 'Human_all.out'
 HUMAN_DATA = pd.read_csv(HUMANFILE)
 
-
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
-
-def get_hist_prob(bins, counts, value):
-    '''takes in the bins and counts from a normalized numpy.histogram() and a value,
-        returns the height of the bin that value falls into.'''
-    idx = np.argmax(bins > value)
-    if idx==0:
-        return(0)
-    else:
-        return(counts[idx-1]/np.sum(counts))
-    
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep.replace('\n', ''))))
 
 def read_data(trainfile, testfile):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)

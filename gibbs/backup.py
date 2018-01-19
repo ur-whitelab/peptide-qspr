@@ -3,18 +3,12 @@ import re
 import math
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-
+from qspr_plots import *
 #CONSTANTS
 MOTIF_LENGTH = 4 #fixed motif lengths, for now
 NUM_MOTIF_CLASSES = 5 #one class for which letter the motif starts with? why not try
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
 DATA_DIR = '/home/rainier/pymc3_qspr/data/'
 fakefile = DATA_DIR + 'pdb_distributed_apd_length_peps.txt'
-
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep)))
 
 def read_data(datafile, motif_file=None):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)

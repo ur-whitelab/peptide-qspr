@@ -7,6 +7,7 @@ from sklearn.metrics import roc_curve
 from matplotlib import pyplot as plt
 import math
 import regex as re
+from qspr_plots import *
 
 def printhelp():
     print("Usage: align_seqs.py [root_directory] [num_classes] [motif_length]")
@@ -29,12 +30,6 @@ with open(fakefile, 'r') as datafile:
 for i in range(len(fake_data)) :
     fake_data[i] = fake_data[i].replace('\n', '')
 
-
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep.replace('\n', ''))))
 
 def int_list_to_pep(int_list):
     '''takes a list of AA indices and returns the string it corresponds to'''

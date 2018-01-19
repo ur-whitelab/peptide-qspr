@@ -10,6 +10,7 @@ import libgibbs as lg
 import random
 import time
 import sys
+from qspr_plots import *
 
 
 
@@ -34,14 +35,9 @@ else:
 #CONSTANTS
 HOMEDIR = '/home/rbarret8/pymc3_qspr/gibbs/python/build'
 
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
 DATA_DIR = '/home/rainier/pymc3_qspr/data/'
 fakefile = DATA_DIR + 'pdb_distributed_apd_length_peps.txt'
 
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep.replace('\n', ''))))
 
 def read_data(datafile, motif_file=None):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)

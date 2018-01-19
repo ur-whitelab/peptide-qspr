@@ -1,7 +1,6 @@
 import numpy as np
+from qspr_plots import *
 
-ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
-            'L','K','M','F','P','S','T','W','Y','V']
 CONTROL_MOTIF_POS = 1 #always start at second place...
 MOTIF_LENGTH = 4 #fixed motif lengths, for now
 
@@ -11,10 +10,6 @@ def read_dists(aa_dist_file, length_file):
     with open(length_file, 'r') as f:
         lengths = [int(line) for line in f]
     return(aa_dist, lengths)
-
-def pep_to_int_list(pep):
-    '''takes a single string of amino acids and translates to a list of ints'''
-    return(list(map(ALPHABET.index, pep)))
 
 def read_data(datafile, motif_file=None):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)

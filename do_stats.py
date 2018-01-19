@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import sys
+from qspr_plots import *
 
 def printHelp():
     print("Usage: do_stats.py [target_directory] [min_num_hills] [max_num_hills]")

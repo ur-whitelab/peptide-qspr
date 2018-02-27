@@ -60,7 +60,16 @@ def read_logs( trainfile, testfile, return_strings = False):
                 peptide_strings[length].append(pep)
     big_aa_list = pep_to_int_list(big_aa_string)
     if(return_strings):
-        return(train_peps, test_peps, train_data, test_data, big_aa_list, peptide_strings)
+        return(train_peptides, test_peptides, train_data, test_data, big_aa_list, peptide_strings)
     else:
-        return(train_peps, test_peps, train_data, test_data, big_aa_list)
+        return(train_peptides, test_peptides, train_data, test_data, big_aa_list)
+
+def calc_positives(arr, cutoff):
+    '''takes in an array of probs given by the above model and returns the number of
+       probs above the cutoff probability. This is for use in generating the ROC curve.'''
+    arr = np.sort(np.array(arr))
+    if not arr[-1] < cutoff:
+        return(len(arr) - np.argmax(arr > cutoff))
+    else:
+        return(0)
 

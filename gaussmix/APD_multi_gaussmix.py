@@ -205,15 +205,6 @@ print('fake dataset min/max: ', min(fakeset_probs), max(fakeset_probs))
 roc_min, roc_max = min(devmin, trainmin, fakemin),  max(devmax, trainmax, fakemax)
 print('lowest min: ', roc_min, 'highest max: ', roc_max)
 
-def calc_positives(arr, cutoff):
-    '''takes in an array of probs given by the above model and returns the number of
-       probs above the cutoff probability. This is for use in generating the ROC curve.'''
-    arr = np.sort(np.array(arr))
-    if not arr[-1] < cutoff:
-        return(len(arr) - np.argmax(arr > cutoff))
-    else:
-        return(0)
-    
 def gen_roc_data(npoints = 100, roc_min = roc_min, roc_max = roc_max, fakes = fakeset_probs,
                  devs = devset_probs, trains= trainset_probs):
     '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,

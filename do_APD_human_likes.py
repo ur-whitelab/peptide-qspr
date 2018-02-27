@@ -84,15 +84,6 @@ def calc_prob(peptide, bg_dist,  motif_dists):
     prob /= float(length)
     return(prob)
 
-def calc_positives(arr, cutoff):
-    '''takes in an array of probs given by the above model and returns the number of
-       probs above the cutoff probability. This is for use in generating the ROC curve.'''
-    arr = np.sort(np.array(arr))
-    if not arr[-1] < cutoff:
-        return(len(arr) - np.argmax(arr > cutoff))
-    else:
-        return(0)
-
 def gen_roc_data(npoints, fpr_arr, tpr_arr, roc_min, roc_max, fakes,
                  trains, tests):
     '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,

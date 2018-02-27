@@ -76,7 +76,7 @@ def calc_prob(peptide, bg_dist,  motif_dists, motif_start=None):
     return(prob)
 
 
-test_data, train_data, all_apd_aa, all_apd_strings = read_logs(TRAINFILE, TESTFILE, return_strings=True)
+_, _, test_data, train_data, all_apd_aa, all_apd_strings = read_logs(TRAINFILE, TESTFILE, return_strings=True)
 
 test_keys = test_data.keys()
 train_keys = train_data.keys()
@@ -88,7 +88,7 @@ for i in range(NUM_MOTIF_CLASSES):
         motif_dists[i][j] = np.genfromtxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(DIRNAME,i,NUM_MOTIF_CLASSES, j))
 
 bg_dist = np.genfromtxt('{}/bg_dist.txt'.format(DIRNAME))
-p
+
 #now that we've recovered the distros, time to DO THE ROC CALCULATIONS!
 
 print("NUMBER OF MOTIFS: {}".format(NUM_MOTIF_CLASSES))
@@ -149,9 +149,9 @@ for i in range(len( predicted_motif_strings)):
     for key in test_seqs_dict:
         for item in test_seqs_dict[key]:
             if(len(re.findall(predicted_motif_strings[i], item)) > 0):
-                counts[i] += 1
+                counts[i] += len(re.findall(predicted_motif_strings[i], item))
     for key in train_seqs_dict:
         for item in train_seqs_dict[key]:
             if(len(re.findall(predicted_motif_strings[i], item)) > 0):
-                counts[i] += 1
+                counts[i] += len(re.findall(predicted_motif_strings[i], item))
 #need to process the counts now, etc.

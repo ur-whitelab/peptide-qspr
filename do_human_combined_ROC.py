@@ -28,43 +28,6 @@ HUMANFILE = DATA_DIR + 'Human_all.out'
 HUMAN_DATA = pd.read_csv(HUMANFILE)
 
 
-def read_data(trainfile, testfile):
-    '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
-       and reads it into a list.'''
-    train_data = {}#dict keyed by peptide length containing the sequences
-    test_data = {}
-    test_peptides = []
-    train_peptides = []
-    big_aa_string = ''#for training the whole background distro
-    with open(trainfile, 'r') as f:
-        lines = f.readlines()
-        nlines = len(lines)
-        start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
-            pep = line.split(',')[0]
-            train_peptides.append(pep)
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in train_data.keys()):
-                train_data[length] = [(pep_to_int_list(pep))]
-            else:
-                train_data[length].append((pep_to_int_list(pep)))
-    with open(testfile, 'r') as f:
-        lines = f.readlines()
-        nlines = len(lines)
-        start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
-            pep = line.split(',')[0]
-            test_peptides.append(pep)
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in test_data.keys()):
-                test_data[length] = [(pep_to_int_list(pep))]
-            else:
-                test_data[length].append((pep_to_int_list(pep)))
-    big_aa_list = pep_to_int_list(big_aa_string)
-    return(test_peptides, train_peptides, train_data, test_data, big_aa_list)
-
 def calc_prob(peptide, bg_dist,  motif_dists):
     '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
     length = len(peptide)
@@ -123,7 +86,7 @@ def gen_roc_data(npoints, fpr_arr, tpr_arr, roc_min, roc_max, fakes,
 #The Gibbs part
 
 print("READING DATA...")
-test_peps, train_peps, test_seqs, train_seqs, all_apd_aa = read_data(TRAINFILE, TESTFILE)
+train_peps, test_peps, train_seqs, test_seqs, all_apd_aa = read_logs(TRAINFILE, TESTFILE)
 
 motif_dists = np.ones((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET))) / float(len(ALPHABET))
 

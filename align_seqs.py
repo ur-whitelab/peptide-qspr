@@ -38,48 +38,6 @@ def int_list_to_pep(int_list):
         ret += (ALPHABET[item])
     return(ret)
 
-def read_data(trainfile, testfile):
-    '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
-       and reads it into a list.'''
-    train_data = {}#dict keyed by peptide length containing the sequences
-    test_data = {}
-    peptide_strings = {}
-    big_aa_string = ''#for training the whole background distro
-    with open(trainfile, 'r') as f:
-        lines = f.readlines()
-        nlines = len(lines)
-        start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
-            pep = line.split(',')[0]
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in train_data.keys()):
-                train_data[length] = [(pep_to_int_list(pep))]
-            else:
-                train_data[length].append((pep_to_int_list(pep)))
-            if(length not in peptide_strings.keys()):
-                peptide_strings[length] = [pep]
-            else:
-                peptide_strings[length].append(pep)
-    with open(testfile, 'r') as f:
-        lines = f.readlines()
-        nlines = len(lines)
-        start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
-            pep = line.split(',')[0]
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in test_data.keys()):
-                test_data[length] = [(pep_to_int_list(pep))]
-            else:
-                test_data[length].append((pep_to_int_list(pep)))
-            if(length not in peptide_strings.keys()):
-                peptide_strings[length] = [pep]
-            else:
-                peptide_strings[length].append(pep)
-    big_aa_list = pep_to_int_list(big_aa_string)
-    return(train_data, test_data, big_aa_list, peptide_strings)
-
 def calc_prob(peptide, bg_dist,  motif_dists, motif_start=None):
     '''For use when we're OUTSIDE the model, gives prob with the motif starting at a specified
        location.'''
@@ -118,7 +76,7 @@ def calc_prob(peptide, bg_dist,  motif_dists, motif_start=None):
     return(prob)
 
 
-test_data, train_data, all_apd_aa, all_apd_strings = read_data(TRAINFILE, TESTFILE)
+test_data, train_data, all_apd_aa, all_apd_strings = read_logs(TRAINFILE, TESTFILE, return_strings=True)
 
 test_keys = test_data.keys()
 train_keys = train_data.keys()

@@ -5,6 +5,7 @@ import sys
 import math
 import copy
 from qspr_plots import *
+#qspr = qspr_plots()
 
 def printhelp():
     print("Usage: do_combined_ROC.py [gaussmix_directory] [num_gauss_clusters] [gauss_ROC_distance_weight] [gibbs_directory] [num_motif_classes] [motif_length]")
@@ -27,43 +28,6 @@ FAKE_DATA = pd.read_csv(FAKEFILE)
 GPOSFILE = DATA_DIR + 'APD_GPOS_SEQS.out'
 GPOS_DATA = pd.read_csv(GPOSFILE)
 
-
-def read_data(trainfile, testfile):
-    '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
-       and reads it into a list.'''
-    train_data = {}#dict keyed by peptide length containing the sequences
-    test_data = {}
-    test_peptides = []
-    train_peptides = []
-    big_aa_string = ''#for training the whole background distro
-    with open(trainfile, 'r') as f:
-        lines = f.readlines()
-        nlines = len(lines)
-        start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
-            pep = line.split(',')[0]
-            train_peptides.append(pep)
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in train_data.keys()):
-                train_data[length] = [(pep_to_int_list(pep))]
-            else:
-                train_data[length].append((pep_to_int_list(pep)))
-    with open(testfile, 'r') as f:
-        lines = f.readlines()
-        nlines = len(lines)
-        start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
-            pep = line.split(',')[0]
-            test_peptides.append(pep)
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in test_data.keys()):
-                test_data[length] = [(pep_to_int_list(pep))]
-            else:
-                test_data[length].append((pep_to_int_list(pep)))
-    big_aa_list = pep_to_int_list(big_aa_string)
-    return(test_peptides, train_peptides, test_data, train_data, big_aa_list)
 
 def calc_prob(peptide, bg_dist,  motif_dists):
     '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
@@ -131,7 +95,7 @@ def gen_roc_data(npoints, fpr_arr, tpr_arr, roc_min, roc_max, fakes,
 #The Gibbs part
 
 print("READING DATA...")
-test_peps, train_peps, test_seqs, train_seqs, all_apd_aa = read_data(TRAINFILE, TESTFILE)
+train_peps, test_peps, train_seqs, test_seqs, all_apd_aa = read_logs(TRAINFILE, TESTFILE)
 
 motif_dists = np.ones((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET))) / float(len(ALPHABET))
 
@@ -204,12 +168,12 @@ biggest_gauss = max( np.max(test_gauss_probs), np.max(train_gauss_probs), np.max
 #train_gauss_probs -= lowest_gauss
 #fake_gauss_probs -= lowest_gauss
 
-#test_gibbs_probs /= biggest_gibbs
-#train_gibbs_probs /= biggest_gibbs
-#fake_gibbs_probs /= biggest_gibbs
-#test_gauss_probs /= biggest_gauss
-#train_gauss_probs /= biggest_gauss
-#fake_gauss_probs /= biggest_gauss
+test_gibbs_probs /= biggest_gibbs
+train_gibbs_probs /= biggest_gibbs
+fake_gibbs_probs /= biggest_gibbs
+test_gauss_probs /= biggest_gauss
+train_gauss_probs /= biggest_gauss
+fake_gauss_probs /= biggest_gauss
 
 '''Now that the prob arrays are comparable magnitudes, we iterate through weights from 0.0 to 1.0
 assigned to either one, and get our ROC for each weight, then we see which weighting is best and record that accuracy'''

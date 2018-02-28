@@ -48,32 +48,6 @@ def calc_prob(peptide, bg_dist,  motif_dists):
     prob /= float(length)
     return(prob)
 
-def gen_roc_data(npoints, roc_min, roc_max, fakes,
-                 trains, tests, fpr_arr, tpr_arr):
-    '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,
-       the second is the TPR. The number of points is npoints. Returns (FPR_arr, TPR_arr).'''
-    best_cutoff = 0.0
-    best_ROC = 0.0
-    roc_range = np.linspace(roc_min, roc_max, npoints)
-    #for each cutoff value, calculate the FPR and TPR
-    for i in range(npoints):
-        fakeset_positives = calc_positives(fakes, roc_range[i])
-        fpr_arr[i] = float(fakeset_positives) / len(fakes)
-        test_positives =  calc_positives(tests, roc_range[i])
-        train_positives = calc_positives(trains, roc_range[i])
-        tpr_arr[i] = float(train_positives + test_positives) / (len(trains) + len(tests) )
-    best_idx = 0
-    old_dist = 2.0
-    for i in range(npoints):
-        dist = math.sqrt(2.0 * fpr_arr[i] **2 + (1-tpr_arr[i]) **2)
-        if (old_dist > dist and not (i==0 or i==NPOINTS-1)):
-            best_idx = i
-            old_dist = dist
-    best_cutoff = roc_range[best_idx]
-    print('best index was {}'.format(best_idx))
-    return( (best_cutoff, best_idx))
-
-
 _, _, train_data, test_data, all_apd_aa = read_logs(TRAINFILE, TESTFILE)
 
 test_keys = test_data.keys()
@@ -130,10 +104,8 @@ roc_min = min(train_min, test_min, fakeset_min)
 roc_max = max(train_max, test_max, fakeset_max)
 
 print("PLOTTING ROC DATA...")
-FPR_ARR = np.zeros(NPOINTS)
-TPR_ARR = np.zeros(NPOINTS)
 
-CUTOFF, BEST_IDX = gen_roc_data(NPOINTS, roc_min, roc_max, fake_probs_arr, train_probs_arr, test_probs_arr, FPR_ARR, TPR_ARR)
+FPR_ARR, TPR_ARR, _, CUTOFF, BEST_IDX = gen_roc_data(NPOINTS, roc_min, roc_max, fakes=fake_probs_arr, trains=train_probs_arr, devs=test_probs_arr)
 print("best cutoff value: {}".format(CUTOFF))
 print("using {} as our cutoff, we achieved an FPR of {} and a TPR of {}".format(CUTOFF, FPR_ARR[BEST_IDX], TPR_ARR[BEST_IDX]))
 

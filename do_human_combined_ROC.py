@@ -48,32 +48,6 @@ def calc_prob(peptide, bg_dist,  motif_dists):
     prob /= float(length)
     return(prob)
 
-def gen_roc_data(npoints, fpr_arr, tpr_arr, roc_min, roc_max, fakes,
-                 trains, tests):
-    '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,
-       the second is the TPR. The number of points is npoints. Returns (FPR_arr, TPR_arr).'''
-    best_cutoff = 0.0
-    best_ROC = 0.0
-    roc_range = np.linspace(roc_min, roc_max, npoints)
-    #for each cutoff value, calculate the FPR and TPR
-    for i in range(npoints):
-        fakeset_positives = calc_positives(fakes, roc_range[i])
-        fpr_arr[i] = float(fakeset_positives) / len(fakes)
-        test_positives =  calc_positives(tests, roc_range[i])
-        train_positives = calc_positives(trains, roc_range[i])
-        tpr_arr[i] = float(train_positives + test_positives) / (len(trains) + len(tests) )
-    best_idx = 0
-    old_dist = 2.0
-    for i in range(0,npoints):
-        dist = math.sqrt(PREFACTOR * fpr_arr[i] **2 + (1-tpr_arr[i]) **2)
-        if (old_dist > dist and fpr_arr[i] > 0):
-            best_idx = i
-            old_dist = dist
-    best_cutoff = roc_range[best_idx]
-    accuracy = (tpr_arr[best_idx] + (1.0-fpr_arr[best_idx]))/2.0
-    return( ( accuracy, best_idx))
-
-    
 #The Gibbs part
 
 print("READING DATA...")
@@ -188,7 +162,7 @@ for i in range(len(weights)):
     roc_test_probs = weights[i] * test_gibbs_probs + (1.0 - weights[i]) * test_gauss_probs
     roc_min = min(np.min(roc_train_probs), np.min(roc_test_probs), np.min(roc_fake_probs))
     roc_max = max(np.max(roc_train_probs), np.max(roc_test_probs), np.max(roc_fake_probs))
-    accuracy, best_idx = gen_roc_data(NPOINTS, fpr_arr, tpr_arr, roc_min, roc_max, roc_fake_probs, roc_train_probs, roc_test_probs)
+    fpr_arr, tpr_arr, accuracy, best_cutoff, best_idx = gen_roc_data(NPOINTS, roc_min, roc_max, fakes=roc_fake_probs, trains=roc_train_probs, devs=roc_test_probs)
     best_fprs_arr[i] = fpr_arr[best_idx]
     best_tprs_arr[i] = tpr_arr[best_idx]
     best_accs_arr[i] = accuracy

@@ -49,39 +49,6 @@ def calc_prob(peptide, bg_dist,  motif_dists):
     prob /= float(length)
     return(prob)
 
-def gen_roc_data(npoints, fpr_arr, tpr_arr, roc_min, roc_max, fakes,
-                 trains, tests, only_tests=False):
-    '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,
-       the second is the TPR. The number of points is npoints. 
-       Returns (accuracy, best_index, best_cutoff) as a tuple. 
-    Works in-place on fpr_arr and tpr_arr.'''
-    best_cutoff = 0.0
-    best_ROC = 0.0
-    roc_range = np.linspace(roc_min, roc_max, npoints)
-    #for each cutoff value, calculate the FPR and TPR
-    for i in range(npoints):
-        if(not only_tests):
-            fakeset_positives = calc_positives(fakes, roc_range[i])
-            fpr_arr[i] = float(fakeset_positives) / len(fakes)
-            test_positives =  calc_positives(tests, roc_range[i])
-            train_positives = calc_positives(trains, roc_range[i])
-            tpr_arr[i] = float(train_positives + test_positives) / (len(trains) + len(tests) )
-        else:
-            fakeset_positives = calc_positives(fakes, roc_range[i])
-            fpr_arr[i] = float(fakeset_positives) / len(fakes)
-            test_positives =  calc_positives(tests, roc_range[i])
-            tpr_arr[i] = float(test_positives) / (len(tests) )
-    best_idx = 0
-    old_dist = 2.0
-    for i in range(0,npoints):
-        dist = math.sqrt(PREFACTOR * fpr_arr[i] **2 + (1-tpr_arr[i]) **2)
-        if (old_dist > dist and fpr_arr[i] > 0):
-            best_idx = i
-            old_dist = dist
-    best_cutoff = roc_range[best_idx]
-    accuracy = (tpr_arr[best_idx] + (1.0-fpr_arr[best_idx]))/2.0
-    return( ( accuracy, best_idx, best_cutoff))
-
     
 #The Gibbs part
 
@@ -175,8 +142,6 @@ weights = np.linspace(0.0, 1.0, 101)
 roc_fake_probs = np.zeros(len(fake_gibbs_probs))
 roc_train_probs = np.zeros(len(train_gibbs_probs))
 roc_test_probs = np.zeros(len(test_gibbs_probs))
-tpr_arr = np.zeros(NPOINTS)
-fpr_arr = np.zeros(NPOINTS)
 accuracy = 0.0
 best_idx = 0
 #these track the best statistics we get with each weight
@@ -212,7 +177,7 @@ for i in range(len(weights)):
     #roc_test_probs = weights[i] * test_gauss_probs + (1.0 - weights[i]) * test_gibbs_probs
     roc_min = min(np.min(roc_train_probs), np.min(roc_test_probs), np.min(roc_fake_probs))
     roc_max = max(np.max(roc_train_probs), np.max(roc_test_probs), np.max(roc_fake_probs))
-    accuracy, best_idx, best_cutoff = gen_roc_data(NPOINTS, fpr_arr, tpr_arr, roc_min, roc_max, roc_fake_probs, roc_train_probs, roc_test_probs, only_tests=False)
+    fpr_arr, tpr_arr, accuracy, best_cutoff, best_idx = gen_roc_data(NPOINTS, roc_min, roc_max, roc_fake_probs, roc_train_probs, roc_test_probs, only_tests=False)
     best_fprs_arr[i] = fpr_arr[best_idx]
     best_tprs_arr[i] = tpr_arr[best_idx]
     best_accs_arr[i] = accuracy
@@ -258,41 +223,3 @@ plt.tight_layout()
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.svg'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.png'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
 plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.pdf'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
-
-
-'''roc_min = min(min(test_gibbs_probs), min(train_gibbs_probs), min(fake_gibbs_probs))
-roc_max = max(max(test_gibbs_probs), max(train_gibbs_probs), max(fake_gibbs_probs))
-gibbs_acc, gibbs_best_idx, gibbs_best_cutoff = gen_roc_data(NPOINTS, fpr_arr, tpr_arr, roc_min, roc_max, fake_gibbs_probs, train_gibbs_probs, test_gibbs_probs)
-roc_min = min(min(test_gauss_probs), min(train_gauss_probs), min(fake_gauss_probs))
-roc_max = max(max(test_gauss_probs), max(train_gauss_probs), max(fake_gauss_probs))
-gauss_acc, gauss_best_idx, gauss_best_cutoff = gen_roc_data(NPOINTS, fpr_arr, tpr_arr, roc_min, roc_max, fake_gauss_probs, train_gauss_probs, test_gauss_probs)
-
-def alt_gen_roc_data(gauss_cutoff, gibbs_cutoff, gibbs_tests, gibbs_trains, gibbs_fakes, gauss_tests, gauss_trains, gauss_fakes):
-    Only return a positive if BOTH Gibbs and Gauss models have it above the cutoff...
-    true_positives = 0
-    false_positives = 0
-    count = 0
-    for i in range(len(gibbs_tests)):
-        count += 1
-        if(gibbs_tests[i] > gibbs_cutoff and gauss_tests[i] > gauss_cutoff):
-            true_positives += 1#only return positive if BOTH are positive
-    for i in range(len(gibbs_trains)):
-        count += 1
-        if(gibbs_trains[i] > gibbs_cutoff and gauss_trains[i] > gauss_cutoff):
-            true_positives += 1
-    for i in range(len(gibbs_fakes)):
-        count += 1
-        if(gibbs_fakes[i] > gibbs_cutoff and gauss_fakes[i] > gauss_cutoff):
-            false_positives += 1
-    overall_tpr = float(true_positives)/float(count)
-    overall_fpr = float(false_positives)/float(count)
-    overall_accuracy = (overall_tpr + (1.0 - overall_fpr))/2.0
-    
-    return( ( overall_accuracy, overall_fpr, overall_tpr))
-
-exp_acc, exp_fpr, exp_tpr = alt_gen_roc_data(gauss_best_cutoff, gibbs_best_cutoff, test_gibbs_probs, train_gibbs_probs, fake_gibbs_probs, test_gauss_probs, train_gauss_probs, fake_gauss_probs)
-
-print("EXPERIMENTAL ACCURACY: {}".format(exp_acc))
-print("EXPERIMENTAL FPR: {}".format(exp_fpr))
-print("EXPERIMENTAL TPR: {}".format(exp_tpr))
-'''

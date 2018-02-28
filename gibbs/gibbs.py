@@ -100,33 +100,6 @@ def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_c
     return(prob)
 
 
-def gen_roc_data(roc_min, roc_max, npoints, fakes,
-                 trains):
-    '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,
-       the second is the TPR. The number of points used is npoints. 
-       Returns (FPR_arr, TPR_arr, best_cutoff_value, and index_of_best_cutoff).'''
-    best_cutoff = 0.0
-    best_ROC = 0.0
-    roc_range = np.linspace(roc_min, roc_max, npoints)
-    fpr_arr = np.zeros(npoints)
-    tpr_arr = np.zeros(npoints)
-    #for each cutoff value, calculate the FPR and TPR
-    for i in range(npoints):
-        fakeset_positives = calc_positives(fakes, roc_range[i])
-        fpr_arr[i] = float(fakeset_positives) / len(fakes)
-        trainset_positives = calc_positives(trains, roc_range[i])
-        tpr_arr[i] = float(trainset_positives) / (len(trains) )
-    best_idx = 0
-    old_dist = 2.0
-    for i in range(0,npoints-1):
-        dist = math.sqrt(fpr_arr[i] **2 + (1-tpr_arr[i]) **2)
-        if (old_dist > dist):
-            best_idx = i
-            old_dist = dist
-    best_cutoff = roc_range[best_idx]
-    print('best index was {}'.format(best_idx))
-    return( (fpr_arr, tpr_arr, best_cutoff, best_idx))
-
 apd_data, all_apd_aa  = read_data(INPUT)#('/home/rainier/pymc3_qspr/gibbs/control_peptides.txt')
 
 #initialize the OVERALL distributions as uniform
@@ -284,7 +257,7 @@ rocmax = max( max(fake_probs), max(apd_probs) )
 
 npoints = 2000
     
-fpr_arr, tpr_arr, cutoff, best_idx = gen_roc_data(rocmin, rocmax, npoints, fake_probs, apd_probs)
+fpr_arr, tpr_arr, _, cutoff, best_idx = gen_roc_data( npoints, rocmin, rocmax, fakes=fake_probs, trains=apd_probs, devs=[0.0])
 
 plotname = "gibbs_sampling_motif_length_{}_{}_classes_{}_iterations.png".format(MOTIF_LENGTH, NUM_MOTIF_CLASSES, NRUNS)
 fig = plt.figure()

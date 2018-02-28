@@ -84,32 +84,6 @@ def calc_prob(peptide, bg_dist,  motif_dists):
     prob /= float(length)
     return(prob)
 
-def gen_roc_data(npoints, fpr_arr, tpr_arr, roc_min, roc_max, fakes,
-                 trains, tests):
-    '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,
-       the second is the TPR. The number of points is npoints. Returns (FPR_arr, TPR_arr).'''
-    best_cutoff = 0.0
-    best_ROC = 0.0
-    roc_range = np.linspace(roc_min, roc_max, npoints)
-    #for each cutoff value, calculate the FPR and TPR
-    for i in range(npoints):
-        fakeset_positives = calc_positives(fakes, roc_range[i])
-        fpr_arr[i] = float(fakeset_positives) / len(fakes)
-        test_positives =  calc_positives(tests, roc_range[i])
-        train_positives = calc_positives(trains, roc_range[i])
-        tpr_arr[i] = float(train_positives + test_positives) / (len(trains) + len(tests) )
-    best_idx = 0
-    old_dist = 2.0
-    for i in range(0,npoints):
-        dist = math.sqrt(PREFACTOR * fpr_arr[i] **2 + (1-tpr_arr[i]) **2)
-        if (old_dist > dist and fpr_arr[i] > 0):
-            best_idx = i
-            old_dist = dist
-    best_cutoff = roc_range[best_idx]
-    accuracy = (tpr_arr[best_idx] + (1.0-fpr_arr[best_idx]))/2.0
-    return( ( accuracy, best_idx, best_cutoff))
-
-    
 #The Gibbs part
 
 print("READING DATA...")
@@ -160,12 +134,10 @@ for pep in FAKE_DATA['sequence']:
 '''Now that we have the probs given to the human data by the model, we get the best cutoff for the human data and see if any of the APD score above it.'''
 
 NPOINTS = 5000
-fpr_arr = np.zeros(NPOINTS)
-tpr_arr = np.zeros(NPOINTS)
 roc_min = min(min(fake_gauss_probs), min(human_gauss_probs))
 roc_max = max(max(fake_gauss_probs), max(human_gauss_probs))
 
-accuracy, best_idx, cutoff = gen_roc_data(NPOINTS, fpr_arr, tpr_arr, roc_min, roc_max, fake_gauss_probs, human_gauss_probs, [0.0])
+_, _, accuracy,  cutoff, best_idx = gen_roc_data(NPOINTS, roc_min, roc_max, fakes=fake_gauss_probs, trains=human_gauss_probs, devs=[0.0])
 
 num_human_like_apd = 0
 human_like_train_indices = []

@@ -205,34 +205,7 @@ print('fake dataset min/max: ', min(fakeset_probs), max(fakeset_probs))
 roc_min, roc_max = min(devmin, trainmin, fakemin),  max(devmax, trainmax, fakemax)
 print('lowest min: ', roc_min, 'highest max: ', roc_max)
 
-def gen_roc_data(npoints = 100, roc_min = roc_min, roc_max = roc_max, fakes = fakeset_probs,
-                 devs = devset_probs, trains= trainset_probs):
-    '''This fills two numpy arrays for use in plotting the ROC curve. The first is the FPR,
-       the second is the TPR. The number of points is npoints. Returns (FPR_arr, TPR_arr).'''
-    best_cutoff = 0.0
-    best_ROC = 0.0
-    roc_range = np.linspace(roc_min, roc_max, npoints)
-    fpr_arr = np.zeros(npoints)
-    tpr_arr = np.zeros(npoints)
-    #for each cutoff value, calculate the FPR and TPR
-    for i in range(npoints):
-        fakeset_positives = calc_positives(fakes, roc_range[i])
-        fpr_arr[i] = float(fakeset_positives) / len(fakes)
-        devset_positives =  calc_positives(devs, roc_range[i])
-        trainset_positives = calc_positives(trains, roc_range[i])
-        tpr_arr[i] = float(devset_positives + trainset_positives) / (len(devs) + len(trains) )
-    best_idx = 0
-    old_dist = 2.0
-    for i in range(0,npoints-1):
-        dist = math.sqrt(fpr_arr[i] **2 + (1-tpr_arr[i]) **2)
-        if (old_dist > dist):
-            best_idx = i
-            old_dist = dist
-    best_cutoff = roc_range[best_idx]
-    print('best index was {}'.format(best_idx))
-    return( (fpr_arr, tpr_arr, best_cutoff, best_idx))
-
-FPR_ARR, TPR_ARR, CUTOFF, BEST_IDX = gen_roc_data()
+FPR_ARR, TPR_ARR, _, CUTOFF, BEST_IDX = gen_roc_data(npoints = 5000, roc_min = roc_min, roc_max = roc_max, fakes = fakeset_probs, devs = devset_probs, trains= trainset_probs)
 print("best cutoff value: {}".format(CUTOFF))
 print("using {} as our cutoff, we achieved an FPR of {} and a TPR of {}".format(CUTOFF, FPR_ARR[BEST_IDX], TPR_ARR[BEST_IDX]))
 #print('false positive rates: ', FPR_ARR, '\n','true positive rates: ', TPR_ARR)

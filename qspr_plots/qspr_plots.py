@@ -100,3 +100,49 @@ def gen_roc_data(npoints, roc_min, roc_max, fakes,
     print('best index was {}'.format(best_idx))
     accuracy = (tpr_arr[best_idx] + (1.0-fpr_arr[best_idx]))/2.0
     return( (fpr_arr, tpr_arr, accuracy, best_cutoff, best_idx))
+
+def calc_prob(peptide, bg_dist,  motif_dists, motif_start=None, motif_class=None):
+    '''For use when we're OUTSIDE the model. Optionally gives prob with the motif starting 
+    at a specified location and/or with the motif class specified. If not specified,
+    loops over all possibilities for both/either.'''
+    length = len(peptide)
+    if(motif_start is None):#loop through all the motif classes available
+        if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
+            start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
+            prob = 0.0
+            for i in range(length):
+                for j in range(length - MOTIF_LENGTH+1):
+                    for k in range(NUM_MOTIF_CLASSES):
+                        if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
+                            prob += bg_dist[peptide[i]] * start_dist[j]
+                        else:#we are in a motif
+                            if(motif_class is None):
+                                prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]
+                            else:
+                                prob += motif_dists[motif_class][i-j][peptide[i]] * start_dist[j]
+        else:#impossible to have a motif of this length, all b/g
+            prob = 0.0
+            for i in range(length):
+                prob += bg_dist[peptide[i]]
+    else:#motif_class is fixed. for comparable magnitudes we loop the same number of times
+        if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
+            start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
+            prob = 0.0
+            for i in range(length):
+                for j in range(length - MOTIF_LENGTH+1):
+                    for k in range(NUM_MOTIF_CLASSES):
+                        if(i < motif_start or i >= motif_start+MOTIF_LENGTH):#not in a motif 
+                            prob += bg_dist[peptide[i]] * start_dist[motif_start]
+                        else:#we are in a motif
+                            if(motif_class is None):
+                                prob += motif_dists[k][i-motif_start][peptide[i]] * start_dist[motif_start]
+                            else:
+                                prob += motif_dists[motif_class][i-motif_start][peptide[i]] * start_dist[motif_start]
+        else:#impossible to have a motif of this length, all b/g
+            prob = 0.0
+            for i in range(length):
+                prob += bg_dist[peptide[i]]
+    prob /= float(length)
+    return(prob)
+
+

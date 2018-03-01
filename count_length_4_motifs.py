@@ -33,29 +33,6 @@ for i in range(NUM_MOTIF_CLASSES):
         motif_dists[i][j] = np.genfromtxt('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(DIRNAME,i,NUM_MOTIF_CLASSES, j))
 
         
-def calc_prob(peptide, bg_dist,  motif_dists, motif_class=None):
-    '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
-    length = len(peptide)
-    if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
-        start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
-        prob = 0.0
-        for i in range(length):
-            for j in range(length - MOTIF_LENGTH+1):
-                for k in range(NUM_MOTIF_CLASSES):
-                    if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
-                        prob += bg_dist[peptide[i]] * start_dist[j]
-                    else:#we are in a motif
-                        if(motif_class is None):
-                            prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]
-                        else:
-                            prob += motif_dists[motif_class][i-j][peptide[i]] * start_dist[j]
-    else:#impossible to have a motif of this length, all b/g
-        prob = 0.0
-        for i in range(length):
-            prob += bg_dist[peptide[i]]
-    prob /= float(length)
-    return(prob)
-
 _, _, train_data, test_data, all_apd_aa = read_logs(TRAINFILE, TESTFILE)
 predict_counts = [0 for i in range(NUM_MOTIF_CLASSES)]#number of times model predicts we see a motif
 actual_counts = [0 for i in range(NUM_MOTIF_CLASSES)]#number of times we actually see that motif
@@ -64,12 +41,12 @@ print('PROCESSING MOTIF DATA...')
 for key in test_data.keys():
     for i in range(len(test_data[key])):
         for j in range(NUM_MOTIF_CLASSES):
-            probs_arr[j] = calc_prob(test_data[key][i], bg_dist, motif_dists, j)
+            probs_arr[j] = calc_prob(test_data[key][i], bg_dist, motif_dists, motif_class=j)
         predict_counts[np.argmax(probs_arr)] += 1
 for key in train_data.keys():
     for i in range(len(train_data[key])):
         for j in range(NUM_MOTIF_CLASSES):
-            probs_arr[j] = calc_prob(train_data[key][i], bg_dist, motif_dists, j)
+            probs_arr[j] = calc_prob(train_data[key][i], bg_dist, motif_dists, motif_class=j)
         predict_counts[np.argmax(probs_arr)] += 1
 
 print('COUNTING MOTIF OCCURRENCES...')

@@ -28,26 +28,6 @@ HUMANFILE = DATA_DIR + 'Human_all.out'
 HUMAN_DATA = pd.read_csv(HUMANFILE)
 
 
-def calc_prob(peptide, bg_dist,  motif_dists):
-    '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
-    length = len(peptide)
-    if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
-        start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
-        prob = 0.0
-        for i in range(length):
-            for j in range(length - MOTIF_LENGTH+1):
-                for k in range(NUM_MOTIF_CLASSES):
-                    if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
-                        prob += bg_dist[peptide[i]] * start_dist[j]
-                    else:#we are in a motif 
-                        prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]
-    else:#impossible to have a motif of this length, all b/g
-        prob = 0.0
-        for i in range(length):
-            prob += bg_dist[peptide[i]]
-    prob /= float(length)
-    return(prob)
-
 #The Gibbs part
 
 print("READING DATA...")

@@ -38,44 +38,6 @@ def int_list_to_pep(int_list):
         ret += (ALPHABET[item])
     return(ret)
 
-def calc_prob(peptide, bg_dist,  motif_dists, motif_start=None):
-    '''For use when we're OUTSIDE the model, gives prob with the motif starting at a specified
-       location.'''
-    length = len(peptide)
-    if(motif_start is None):
-        if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
-            start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
-            prob = 0.0
-            for i in range(length):
-                for j in range(length - MOTIF_LENGTH+1):
-                    for k in range(NUM_MOTIF_CLASSES):
-                        if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
-                            prob += bg_dist[peptide[i]] * start_dist[j]
-                        else:#we are in a motif 
-                            prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]
-        else:#impossible to have a motif of this length, all b/g
-            prob = 0.0
-            for i in range(length):
-                prob += bg_dist[peptide[i]]
-    else:
-        if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
-            start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
-            prob = 0.0
-            for i in range(length):
-                for j in range(length - MOTIF_LENGTH+1):
-                    for k in range(NUM_MOTIF_CLASSES):
-                        if(i < motif_start or i >= motif_start+MOTIF_LENGTH):#not in a motif 
-                            prob += bg_dist[peptide[i]] * start_dist[motif_start]
-                        else:#we are in a motif 
-                            prob += motif_dists[k][i-motif_start][peptide[i]] * start_dist[motif_start]
-        else:#impossible to have a motif of this length, all b/g
-            prob = 0.0
-            for i in range(length):
-                prob += bg_dist[peptide[i]]
-    prob /= float(length)
-    return(prob)
-
-
 _, _, test_data, train_data, all_apd_aa, all_apd_strings = read_logs(TRAINFILE, TESTFILE, return_strings=True)
 
 test_keys = test_data.keys()

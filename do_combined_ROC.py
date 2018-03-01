@@ -5,7 +5,6 @@ import sys
 import math
 import copy
 from qspr_plots import *
-#qspr = qspr_plots()
 
 def printhelp():
     print("Usage: do_combined_ROC.py [gaussmix_directory] [num_gauss_clusters] [gauss_ROC_distance_weight] [gibbs_directory] [num_motif_classes] [motif_length]")
@@ -29,27 +28,6 @@ GPOSFILE = DATA_DIR + 'APD_GPOS_SEQS.out'
 GPOS_DATA = pd.read_csv(GPOSFILE)
 
 
-def calc_prob(peptide, bg_dist,  motif_dists):
-    '''For use when we're OUTSIDE the model, for generating ROC data and the like.'''
-    length = len(peptide)
-    if(length - MOTIF_LENGTH +1 > 0 and MOTIF_LENGTH > 0):
-        start_dist = np.ones(length - MOTIF_LENGTH +1) /(length-MOTIF_LENGTH+1)#uniform start dists
-        prob = 0.0
-        for i in range(length):
-            for j in range(length - MOTIF_LENGTH+1):
-                for k in range(NUM_MOTIF_CLASSES):
-                    if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
-                        prob += bg_dist[peptide[i]] * start_dist[j]
-                    else:#we are in a motif 
-                        prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]
-    else:#impossible to have a motif of this length, all b/g
-        prob = 0.0
-        for i in range(length):
-            prob += bg_dist[peptide[i]]
-    prob /= float(length)
-    return(prob)
-
-    
 #The Gibbs part
 
 print("READING DATA...")

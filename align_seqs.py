@@ -63,16 +63,16 @@ train_starts_probs_dict = {}
 for key in test_keys:
     for i in range(len(test_data[key])):
         if(key in test_starts_probs_dict.keys()):
-            test_starts_probs_dict[key].append([(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)])
+            test_starts_probs_dict[key].append([(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)])
         else:
-            test_starts_probs_dict[key] = [[(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)]]
+            test_starts_probs_dict[key] = [[(calc_prob(test_data[key][i], bg_dist, motif_dists, motif_start = j, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH)) for j in range(len(test_data[key][i]) - MOTIF_LENGTH+1)]]
 
 for key in train_keys:
     for i in range(len(train_data[key])):
         if(key in train_starts_probs_dict.keys()):
-            train_starts_probs_dict[key].append([(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)])
+            train_starts_probs_dict[key].append([(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)])
         else:
-            train_starts_probs_dict[key] = [[(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)]]
+            train_starts_probs_dict[key] = [[(calc_prob(train_data[key][i], bg_dist, motif_dists, motif_start = j, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH)) for j in range(len(train_data[key][i]) - MOTIF_LENGTH+1)]]
 
 
 #get the most probable start for each of these peptides.

@@ -39,7 +39,7 @@ DATA_DIR = '/home/rainier/pymc3_qspr/data/'
 fakefile = DATA_DIR + 'pdb_distributed_apd_length_peps.txt'
 
 
-def read_data(datafile, motif_file=None):
+def read_data(datafile):
     '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
        and reads it into a list.'''
     train_data = {}#dict keyed by peptide length containing the sequences

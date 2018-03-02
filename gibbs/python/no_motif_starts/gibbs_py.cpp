@@ -1,4 +1,4 @@
-#include "gibbs_py.h"
+include "gibbs_py.h"
 #include <string>
 #include <boost/foreach.hpp>
 #include <algorithm>

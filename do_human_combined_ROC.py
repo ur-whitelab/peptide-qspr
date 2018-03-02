@@ -66,14 +66,14 @@ for pep in test_peps:
     prob = 0.0
     for key in keys:
         prob += get_hist_prob(bins[key], counts[key], HUMAN_DATA.loc[HUMAN_DATA['sequence'] == pep][key].iloc[0])/3.0
-    test_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists))
+    test_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
     test_gauss_probs.append(prob)
 
 for pep in train_peps:
     prob = 0.0
     for key in keys:
         prob += get_hist_prob(bins[key], counts[key], HUMAN_DATA.loc[HUMAN_DATA['sequence'] == pep][key].iloc[0])/3.0
-    train_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists))
+    train_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
     train_gauss_probs.append(prob)
 
 for i in range(len(FAKE_DATA['sequence'])):
@@ -81,7 +81,7 @@ for i in range(len(FAKE_DATA['sequence'])):
     pep = FAKE_DATA['sequence'].iloc[i]
     for key in keys:
         prob += get_hist_prob(bins[key], counts[key], FAKE_DATA[key].iloc[i])/3.0
-    fake_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists))
+    fake_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
     fake_gauss_probs.append(prob)
 
 #divide each prob arr by the most likely prob to compare

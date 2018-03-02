@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
             'L','K','M','F','P','S','T','W','Y','V']
 
-def read_data(datafile, motif_file=None):
+def read_data(datafile):
     '''Takes a properly-formatted peptide datafile and reads it into a numpy array.
        Optionally also treats a motif file, which should be one number per line,
        indicating the motif class to which each peptide specified within the datafile

@@ -54,23 +54,23 @@ fake_probs_arr = []
 for key in test_keys:
     for i in range(len(test_data[key])):
         if(key in test_probs_dict.keys()):
-            test_probs_dict[key].append(calc_prob(test_data[key][i], bg_dist, motif_dists))
+            test_probs_dict[key].append(calc_prob(test_data[key][i], bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
         else:
             test_probs_dict[key] = []
-            test_probs_dict[key].append(calc_prob(test_data[key][i], bg_dist, motif_dists))
-        test_probs_arr.append(calc_prob(test_data[key][i], bg_dist, motif_dists))
+            test_probs_dict[key].append(calc_prob(test_data[key][i], bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
+        test_probs_arr.append(calc_prob(test_data[key][i], bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
 
 for key in train_keys:
     for i in range(len(train_data[key])):
         if(key in train_probs_dict.keys()):
-            train_probs_dict[key].append(calc_prob(train_data[key][i], bg_dist, motif_dists))
+            train_probs_dict[key].append(calc_prob(train_data[key][i], bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
         else:
             train_probs_dict[key] = []
-            train_probs_dict[key].append(calc_prob(train_data[key][i], bg_dist, motif_dists))
-        train_probs_arr.append(calc_prob(train_data[key][i], bg_dist, motif_dists))
+            train_probs_dict[key].append(calc_prob(train_data[key][i], bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
+        train_probs_arr.append(calc_prob(train_data[key][i], bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
 
 for item in fake_data:
-    fake_probs_arr.append(calc_prob(pep_to_int_list(item), bg_dist, motif_dists))
+    fake_probs_arr.append(calc_prob(pep_to_int_list(item), bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
 
 test_probs_arr = np.array(test_probs_arr)
 train_probs_arr = np.array(train_probs_arr)

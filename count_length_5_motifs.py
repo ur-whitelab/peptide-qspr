@@ -44,12 +44,12 @@ print('PROCESSING MOTIF DATA...')
 for key in test_data.keys():
     for i in range(len(test_data[key])):
         for j in range(NUM_MOTIF_CLASSES):
-            probs_arr[j] = calc_prob(test_data[key][i], bg_dist, motif_dists, motif_class=j)
+            probs_arr[j] = calc_prob(test_data[key][i], bg_dist, motif_dists, motif_class=j, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH)
         predict_counts[np.argmax(probs_arr)] += 1
 for key in train_data.keys():
     for i in range(len(train_data[key])):
         for j in range(NUM_MOTIF_CLASSES):
-            probs_arr[j] = calc_prob(train_data[key][i], bg_dist, motif_dists, motif_class=j)
+            probs_arr[j] = calc_prob(train_data[key][i], bg_dist, motif_dists, motif_class=j, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH)
         predict_counts[np.argmax(probs_arr)] += 1
 
 print('COUNTING MOTIF OCCURRENCES...')

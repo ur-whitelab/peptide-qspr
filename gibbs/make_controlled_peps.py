@@ -11,25 +11,6 @@ def read_dists(aa_dist_file, length_file):
         lengths = [int(line) for line in f]
     return(aa_dist, lengths)
 
-def read_data(datafile, motif_file=None):
-    '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
-       and reads it into a list.'''
-    data = {}#dict keyed by peptide length containing the sequences
-    with open(datafile, 'r') as f:
-        big_aa_string = ''#for training the whole background distro
-        lines = f.readlines()
-        nlines = len(lines)
-        for line in lines[1:]:#skip the header
-            pep = line.split(',')[0]
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in data.keys()):
-                data[length] = [(pep_to_int_list(pep))]
-            else:
-                data[length].append((pep_to_int_list(pep)))
-        big_aa_list = pep_to_int_list(big_aa_string)
-    return(data, big_aa_list)
-
 def make_controlled_pep(bg_dist, motif_dist, motif_start, length):
     '''Takes in some defined distros, a motif position (fixed) and a length. Makes a peptide from
     them. These will be used to test the convergence of the Gibbs sampler.'''

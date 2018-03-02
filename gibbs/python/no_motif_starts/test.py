@@ -33,80 +33,9 @@ ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
 DATA_DIR = '/home/rainier/pymc3_qspr/data/'
 fakefile = DATA_DIR + 'pdb_distributed_apd_length_peps.txt'
 
-def get_tot_prob(peptide, bg_dist,  motif_dists, class_dist, start_dist, motif_class=None, motif_start=None ):
-    '''Takes in a single peptide as a LIST OF INTS, the background distro, the
-       dict of motif distros, either the class distro OF THE SPECIFIC PEPTIDE
-       or the set motif class, and either the motif start position or the start 
-       distros. Returns the total probability
-       density assigned to the sequence by the model. This is called during sampling AND
-       during calculation of ROC data, so it has to handle taking in distros or set values for both
-       motif start and motif class in any combination (4 cases).'''
-    length = len(peptide)
-    prob = 0.0
-    #for use during Gibbs steps, when start position is given (sampled)
-    if motif_start is not None:#use set start position
-        if motif_class is not None:#use set class value
-            for i in range(length):#loop over all AA
-                for j in range(length - MOTIF_LENGTH + 1):
-                    for k in range(NUM_MOTIF_CLASSES):
-                        #we know where the motif is
-                        if(i < motif_start or i >= motif_start + MOTIF_LENGTH):#\geq because of indexing
-                            prob += bg_dist[peptide[i]] * start_dist[j] * class_dist[motif_class]
-                        else:
-                            prob += motif_dists[motif_class][ i - motif_start][peptide[i]] * start_dist[j] * class_dist[motif_class]
-        else:#motif_class is None -> use distros
-            for i in range(length):
-                for j in range(length - MOTIF_LENGTH + 1):
-                    for k in range(NUM_MOTIF_CLASSES):
-                        if(i < motif_start or i >= motif_start + MOTIF_LENGTH):#not in a motif
-                            prob += bg_dist[peptide[i]]* start_dist[j] * class_dist[k]
-                        else:#in a motif
-                            prob += motif_dists[k][i - motif_start][peptide[i]] * start_dist[j] * class_dist[k]
-                            #for use during evaluation & finding ROC data
-    else:#start_dist is not None -> use distros, no set value
-        if motif_class is not None:#use set class value but draw from start position distro
-            for i in range(length):
-                for j in range(length - MOTIF_LENGTH+1):#all possible motif start positions
-                    for k in range(NUM_MOTIF_CLASSES):
-                        if( i < j or i >= j+MOTIF_LENGTH):#we're not in a motif
-                            prob += bg_dist[peptide[i]] * start_dist[j] * class_dist[k]
-                        else:#we're in a motif
-                            prob += motif_dists[motif_class][i - j][peptide[i]] * start_dist[j] * class_dist[k]
-        else:#don't know class value OR motif start value. iterate through both...
-            for i in range(length):
-                for j in range(length - MOTIF_LENGTH+1):
-                    for k in range(NUM_MOTIF_CLASSES):
-                        if(i < j or i >= j+MOTIF_LENGTH):#not in a motif 
-                            prob += bg_dist[peptide[i]] * start_dist[j] * class_dist[k]
-                        else:#we are in a motif 
-                            prob += motif_dists[k][i-j][peptide[i]] * start_dist[j]* class_dist[k]
-    return(prob)
-
-
 def pep_to_int_list(pep):
     '''takes a single string of amino acids and translates to a list of ints'''
     return(list(map(ALPHABET.index, pep)))
-
-def read_data(datafile, motif_file=None):
-    '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
-       and reads it into a list.'''
-    data = {}#dict keyed by peptide length containing the sequences
-    with open(datafile, 'r') as f:
-        big_aa_string = ''#for training the whole background distro
-        lines = f.readlines()
-        nlines = len(lines)
-        start_idx = (1 if ('#' in lines[0] or 'sequence' in lines[0]) else 0)
-        for line in lines[start_idx:]:#skip the header
-            pep = line.split(',')[0]
-            length = len(pep)
-            big_aa_string+=pep
-            if(length not in data.keys()):
-                data[length] = [(pep_to_int_list(pep))]
-            else:
-                data[length].append((pep_to_int_list(pep)))
-        big_aa_list = pep_to_int_list(big_aa_string)
-    return(data, big_aa_list)
-
 
 apd_data, all_apd_aa  = read_data(INPUT)#('/home/rainier/pymc3_qspr/gibbs/control_peptides.txt')
 

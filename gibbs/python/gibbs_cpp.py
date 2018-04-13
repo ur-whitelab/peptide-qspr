@@ -40,8 +40,8 @@ fakefile = DATA_DIR + 'pdb_distributed_apd_length_peps.txt'
 
 
 def read_data(datafile):
-    '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence)
-       and reads it into a list.'''
+    '''Takes a properly-formatted peptide datafile (each line MUST start with a sequence) and 
+       reads it into a training and testing dataset, as well as a list of all amino acids seen.'''
     train_data = {}#dict keyed by peptide length containing the sequences
     test_data = {}#for testing
     with open(datafile, 'r') as f:

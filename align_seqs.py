@@ -1,11 +1,6 @@
 import numpy as np
-from random import randint, shuffle
 import sys
-import pandas as pd
-from sklearn import svm
-from sklearn.metrics import roc_curve
 from matplotlib import pyplot as plt
-import math
 import regex as re
 from qspr_plots import *
 

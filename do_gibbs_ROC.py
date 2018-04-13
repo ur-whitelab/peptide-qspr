@@ -84,7 +84,7 @@ roc_max = max(train_max, test_max, fakeset_max)
 
 print("PLOTTING ROC DATA...")
 
-FPR_ARR, TPR_ARR, _, CUTOFF, BEST_IDX = gen_roc_data(NPOINTS, roc_min, roc_max, fakes=fake_probs_arr, trains=train_probs_arr, devs=test_probs_arr)
+FPR_ARR, TPR_ARR, _, CUTOFF, BEST_IDX = gen_roc_data(NPOINTS, roc_min, roc_max, fakes=fake_probs_arr, trains=[], devs=test_probs_arr)#train_probs_arr
 print("best cutoff value: {}".format(CUTOFF))
 print("using {} as our cutoff, we achieved an FPR of {} and a TPR of {}".format(CUTOFF, FPR_ARR[BEST_IDX], TPR_ARR[BEST_IDX]))
 

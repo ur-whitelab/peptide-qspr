@@ -8,9 +8,7 @@ ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
 
 def read_data(datafile):
     '''Takes a properly-formatted peptide datafile and reads it into a numpy array.
-       Optionally also treats a motif file, which should be one number per line,
-       indicating the motif class to which each peptide specified within the datafile
-       belongs.'''
+       Also records the lengths of all the amino acids seen, for histogramming.'''
     raw_data = np.genfromtxt(datafile)
     lengths = np.zeros((int(raw_data[-1][0]+1)))
     data = []

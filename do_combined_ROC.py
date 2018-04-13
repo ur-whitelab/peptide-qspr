@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import sys
-import math
 import copy
 from qspr_plots import *
 
@@ -155,7 +154,7 @@ for i in range(len(weights)):
     #roc_test_probs = weights[i] * test_gauss_probs + (1.0 - weights[i]) * test_gibbs_probs
     roc_min = min(np.min(roc_train_probs), np.min(roc_test_probs), np.min(roc_fake_probs))
     roc_max = max(np.max(roc_train_probs), np.max(roc_test_probs), np.max(roc_fake_probs))
-    fpr_arr, tpr_arr, accuracy, best_cutoff, best_idx = gen_roc_data(NPOINTS, roc_min, roc_max, roc_fake_probs, roc_train_probs, roc_test_probs, only_tests=False)
+    fpr_arr, tpr_arr, accuracy, best_cutoff, best_idx = gen_roc_data(NPOINTS, roc_min, roc_max, fakes=roc_fake_probs, trains=roc_train_probs, devs=roc_test_probs)#roc_train_probs, devs=[])#roc_test_probs)
     best_fprs_arr[i] = fpr_arr[best_idx]
     best_tprs_arr[i] = tpr_arr[best_idx]
     best_accs_arr[i] = accuracy
@@ -163,15 +162,22 @@ for i in range(len(weights)):
         optimal_acc = accuracy
         optimal_fpr_arr = copy.deepcopy(fpr_arr)
         optimal_tpr_arr = copy.deepcopy(tpr_arr)
+        optimal_cutoff = best_cutoff
         optimal_best_idx = best_idx
         optimal_weight = weights[i]
 
 with open('{}/{}_clusters_{}_motifs_length_{}_combined_statistics_log.txt'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH), 'w+') as f:
-    f.write('Optimal TPR: {:.4}%\n'.format(optimal_tpr_arr[optimal_best_idx]))
-    f.write('Optimal FPR: {:.4}%\n'.format(optimal_fpr_arr[optimal_best_idx]))
-    f.write('Optimal Accuracy: {:.4}%\n'.format(optimal_acc))
-    f.write('Optimal Motif Weight: {:.4}%\n'.format(optimal_weight))
-    f.write('Optimal QSPR Weight: {:.4}%\n'.format(1.0 - optimal_weight))
+    f.write('Optimal TPR: {:.4}\n'.format(optimal_tpr_arr[optimal_best_idx]))
+    f.write('Optimal FPR: {:.4}\n'.format(optimal_fpr_arr[optimal_best_idx]))
+    f.write('Optimal Accuracy: {:.4}\n'.format(optimal_acc))
+    f.write('Optimal Motif Weight: {:.4}\n'.format(optimal_weight))
+    f.write('Optimal QSPR Weight: {:.4}\n'.format(1.0 - optimal_weight))
+    f.write('Biggest Gibbs Prob: {:.4}\n'.format(biggest_gibbs))
+    f.write('Biggest Gauss Prob: {:.4}\n'.format(biggest_gauss))
+    f.write('Lowest Gibbs Prob: {:.4}\n'.format(lowest_gibbs))
+    f.write('Lowest Gauss Prob: {:.4}\n'.format(lowest_gauss))
+    f.write('Optimal Best Cutoff: {:.4}\n'.format(optimal_cutoff))
+
         
 plt.rcParams.update({'font.size': 7})
 plt.figure(figsize = (2.5, 2.0), dpi = 800)

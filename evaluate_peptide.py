@@ -3,24 +3,26 @@ from sys import argv
 from math import sqrt
 from scipy.stats import norm
 from qspr_plots import *
+import pkg_resources
 
+#python3 -i evaluate_peptide.py /home/rainier/pymc3_qspr/data/ /home/rainier/pymc3_qspr/data/gaussmix/gpos/only_3_descriptors/ 3 /home/rainier/pymc3_qspr/data/gibbs/with_starts/8_classes/gpos_8_classes_length_3/ 8 3 KLLKLLKLLKKLLLKLKLK
 
 def printhelp():
-    print("Usage: evaluate_peptide.py [data_dir] [gaussmix_directory] [num_gauss_clusters] [gibbs_directory] [num_motif_classes] [motif_length] [peptide]")
+    print("Usage: evaluate_peptide.py [peptide]")
     exit(1)
 
-if(len(argv) != 8):
+if(len(argv) != 2):
     printhelp()
     
-DATA_DIR = argv[1]
-quantile_means_file = DATA_DIR + "/baseline_means.csv"
-quantile_vars_file = DATA_DIR + "/baseline_vars.csv"
-GAUSSDIR = argv[2]
-NUM_CLUSTERS = int(argv[3])
-GIBBSDIR = argv[4]
-NUM_MOTIF_CLASSES = int(argv[5])
-MOTIF_LENGTH = int(argv[6])
-PEPTIDE = argv[7]
+DATA_DIR = pkg_resources.resource_filename(__name__, 'resources/')
+quantile_means_file = pkg_resources.resource_filename(__name__, DATA_DIR + "/baseline_means.csv")
+quantile_vars_file = pkg_resources.resource_filename(__name__, DATA_DIR + "/baseline_vars.csv")
+GAUSSDIR = pkg_resources.resource_filename(__name__, 'resources/gauss')
+NUM_CLUSTERS = 3 #fixed, as this was the optimal case
+GIBBSDIR = pkg_resources.resource_filename(__name__, 'resources/gibbs')
+NUM_MOTIF_CLASSES = 8
+MOTIF_LENGTH = 3
+PEPTIDE = argv[1]
 
 NUM_DESCRIPTORS_ORIGINALLY_USED = 11 #don't change this!
 N = NUM_DESCRIPTORS_ORIGINALLY_USED
@@ -72,7 +74,7 @@ lowest_gibbs =  float(lines[7].split()[3].replace('\n',''))
 lowest_gauss =  float(lines[8].split()[3].replace('\n',''))
 opt_cutoff = float(lines[9].split()[3].replace('\n',''))
 
-print('optimal motif weight: {:.3}, optimal qspr weight: {:.3}, biggest gibbs: {:.3}, biggest gauss: {:.3}'.format(opt_motif_weight, opt_qspr_weight, biggest_gibbs, biggest_gauss))
+#print('optimal motif weight: {:.3}, optimal qspr weight: {:.3}, biggest gibbs: {:.3}, biggest gauss: {:.3}'.format(opt_motif_weight, opt_qspr_weight, biggest_gibbs, biggest_gauss))
 
 
 bg_dist = genfromtxt('{}/bg_dist.txt'.format(GIBBSDIR))
@@ -85,7 +87,7 @@ with open(GIBBSDIR + '/motif_lists.txt', 'r') as f:
     lines = f.readlines()
 motifs_list = lines[1::2]
 motifs_list = [item.replace('\n', '') for item in motifs_list]
-print('motifs list is {}'.format(motifs_list))
+#print('motifs list is {}'.format(motifs_list))
 
 
 counts = {}

@@ -6,10 +6,10 @@ import copy
 from qspr_plots import *
 
 def printhelp():
-    print("Usage: do_combined_ROC.py [gaussmix_directory] [num_gauss_clusters] [gauss_ROC_distance_weight] [gibbs_directory] [num_motif_classes] [motif_length]")
+    print("Usage: do_combined_ROC.py [gaussmix_directory] [num_gauss_clusters] [gauss_ROC_distance_weight] [gibbs_directory] [num_motif_classes] [motif_length] [HUMAN (default 0)]")
     exit(1)
 
-if len(sys.argv) != 7:
+if len(sys.argv) != 7 and len(sys.argv) != 8:
     printhelp()
 
 GAUSSDIR = sys.argv[1]
@@ -23,9 +23,14 @@ TRAINFILE = GIBBSDIR+'/train_set.txt'
 TESTFILE = GIBBSDIR+'/test_set.txt'
 FAKEFILE = DATA_DIR + 'shorter_pdb_distributed_peps.out'
 FAKE_DATA = pd.read_csv(FAKEFILE)
-GPOSFILE = DATA_DIR + 'APD_GPOS_SEQS.out'
-GPOS_DATA = pd.read_csv(GPOSFILE)
+HUMAN = False
+if len(sys.argv) == 8:
+    HUMAN = bool(int(sys.argv[7]))
+POSFILE = DATA_DIR + 'APD_GPOS_SEQS.out' if not HUMAN else DATA_DIR + 'Human_all.out'
+POS_DATA = pd.read_csv(POSFILE)
 
+
+human_str = '' if not HUMAN else 'HUMAN_'
 
 #The Gibbs part
 
@@ -64,14 +69,14 @@ fake_gibbs_probs = []
 for pep in test_peps:
     prob = 0.0
     for key in keys:
-        prob += get_hist_prob(bins[key], counts[key], GPOS_DATA.loc[GPOS_DATA['sequence'] == pep][key].iloc[0])/len(keys)
+        prob += get_hist_prob(bins[key], counts[key], POS_DATA.loc[POS_DATA['sequence'] == pep][key].iloc[0])/len(keys)
     test_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
     test_gauss_probs.append(prob)
 
 for pep in train_peps:
     prob = 0.0
     for key in keys:
-        prob += 100.0 * get_hist_prob(bins[key], counts[key], GPOS_DATA.loc[GPOS_DATA['sequence'] == pep][key].iloc[0])/len(keys)
+        prob += 100.0 * get_hist_prob(bins[key], counts[key], POS_DATA.loc[POS_DATA['sequence'] == pep][key].iloc[0])/len(keys)
     train_gibbs_probs.append(calc_prob(pep_to_int_list(pep), bg_dist, motif_dists, num_motif_classes=NUM_MOTIF_CLASSES, motif_length=MOTIF_LENGTH))
     train_gauss_probs.append(prob)
 
@@ -166,7 +171,7 @@ for i in range(len(weights)):
         optimal_best_idx = best_idx
         optimal_weight = weights[i]
 
-with open('{}/{}_clusters_{}_motifs_length_{}_combined_statistics_log.txt'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH), 'w+') as f:
+with open('{}/{}{}_clusters_{}_motifs_length_{}_combined_statistics_log.txt'.format(DATA_DIR,human_str, NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH), 'w+') as f:
     f.write('Optimal TPR: {:.4}\n'.format(optimal_tpr_arr[optimal_best_idx]))
     f.write('Optimal FPR: {:.4}\n'.format(optimal_fpr_arr[optimal_best_idx]))
     f.write('Optimal Accuracy: {:.4}\n'.format(optimal_acc))
@@ -185,15 +190,15 @@ plt.figure(figsize = (2.5, 2.0), dpi = 800)
 plt.xlabel('Weight Assigned to Motifs')#, labelpad=-21)
 plt.ylabel('Fraction')
 #plt.grid(color='grey', linestyle='--')
-plt.ylim(0.7,1.0)
+plt.ylim(min(best_accs_arr) - 0.1*min(best_accs_arr),1.0)
 #plt.plot(weights, best_fprs_arr, 'o', color = 'red', ls='--', label='FPR', lw=2.0, ms=2.0)
 #plt.plot(weights, best_tprs_arr, 'o', color = 'green', ls='--',label='TPR', lw=2.0, ms=2.0)
 plt.plot(weights, best_accs_arr, 'o', color='blue', ls='-',label='Accuracy', lw=2.0, ms=2.0)
 plt.legend(loc='best', fontsize='small')
 plt.tight_layout()
-plt.savefig('{}/{}_clusters_{}_motifs_length_{}_combined_statistics.svg'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
-plt.savefig('{}/{}_clusters_{}_motifs_length_{}_combined_statistics.pdf'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
-plt.savefig('{}/{}_clusters_{}_motifs_length_{}_combined_statistics.png'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
+plt.savefig('{}/{}{}_clusters_{}_motifs_length_{}_combined_statistics.svg'.format(DATA_DIR,human_str, NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
+plt.savefig('{}/{}{}_clusters_{}_motifs_length_{}_combined_statistics.pdf'.format(DATA_DIR,human_str, NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
+plt.savefig('{}/{}{}_clusters_{}_motifs_length_{}_combined_statistics.png'.format(DATA_DIR,human_str, NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH))
 
 
 plt.figure(figsize = (2.5, 2.0), dpi = 800)
@@ -204,6 +209,6 @@ plt.plot(optimal_fpr_arr[:-2], optimal_tpr_arr[:-2], 'o', color='red',label='ROC
 plt.plot(optimal_fpr_arr[optimal_best_idx], optimal_tpr_arr[optimal_best_idx], 's', color='blue', label='Optimal Cutoff',lw=2.0, ms=2.0)
 plt.plot(optimal_fpr_arr,optimal_fpr_arr, color='black', ls=':', label='Totally Random')
 plt.tight_layout()
-plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.svg'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
-plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.png'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
-plt.savefig('{}/{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.pdf'.format(DATA_DIR,NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
+plt.savefig('{}/{}{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.svg'.format(DATA_DIR,human_str, NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
+plt.savefig('{}/{}{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.png'.format(DATA_DIR,human_str, NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))
+plt.savefig('{}/{}{}_clusters_{}_motifs_length_{}_optimal_ROC_weight_{}.pdf'.format(DATA_DIR,human_str, NUM_CLUSTERS, NUM_MOTIF_CLASSES, MOTIF_LENGTH, optimal_weight))

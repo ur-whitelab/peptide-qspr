@@ -1,0 +1,4 @@
+best idx 2546
+best FPR 0.1747
+best TPR 0.6825
+accuracy 0.7539

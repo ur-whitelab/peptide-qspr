@@ -18,7 +18,6 @@ class Model:
     def to_quantile(self, x, n, mean, var):
         val = norm.pdf(x, loc=mean*n, scale = sqrt(n) * sqrt(var) )
         return(val * 100.0)
-
             
     def read_data(self, human=False):
         self.quantile_means = {}
@@ -87,12 +86,8 @@ class Model:
                 '{}/{}_clusters_{}_observed.counts'.format(self.GAUSSDIR, self.NUM_CLUSTERS, key))
             self.bins[key] = genfromtxt(
                 '{}/{}_clusters_{}_observed.bins'.format(self.GAUSSDIR, self.NUM_CLUSTERS, key))
-        
-    def __init__(self, human = False):
-        self.DATA_DIR = pkg_resources.resource_filename(__name__, 'resources/')
-        self.quantile_means_file = pkg_resources.resource_filename(__name__, self.DATA_DIR + '/baseline_means.csv')
-        self.quantile_vars_file = pkg_resources.resource_filename(__name__, self.DATA_DIR + '/baseline_vars.csv')
-        self.keys = ['netCharge', 'nChargedGroups', 'nNonPolarGroups']#the 3 key descriptors
+            
+    def setup(self, human = False):
         if not human:#for apd (default), use params for apd-trained model
             self.GAUSSDIR = pkg_resources.resource_filename(__name__, 'resources/gauss')
             self.NUM_CLUSTERS = 3
@@ -105,9 +100,17 @@ class Model:
             self.GIBBSDIR = pkg_resources.resource_filename(__name__, 'resources/human/gibbs')
             self.NUM_MOTIF_CLASSES = 0
             self.MOTIF_LENGTH = 0
+    
+    def __init__(self, human = False):
+        self.DATA_DIR = pkg_resources.resource_filename(__name__, 'resources/')
+        self.quantile_means_file = pkg_resources.resource_filename(__name__, self.DATA_DIR + '/baseline_means.csv')
+        self.quantile_vars_file = pkg_resources.resource_filename(__name__, self.DATA_DIR + '/baseline_vars.csv')
+        self.keys = ['netCharge', 'nChargedGroups', 'nNonPolarGroups']#the 3 key descriptors
+        self.setup(human = human)
         self.read_data(human = human)
 
     def evaluate_peptide(self, peptide, human):
+        retval = {'accuracy': self.opt_acc}#initialize blank dict
         if not peptide.isalpha():
             raise ValueError(
                 'Bad input. These letters are valid amino acids: {}'.format(str(ALPHABET)[1:-1]))
@@ -128,8 +131,7 @@ class Model:
         pep_gauss_prob = prob
 
         pep_gibbs_prob = calc_prob(pep_to_int_list(peptide), self.bg_dist, self.motif_dists, num_motif_classes=self.NUM_MOTIF_CLASSES, motif_length=self.MOTIF_LENGTH)
-
-        print('pep_gibbs_prob is {} and pep_gauss_prob is {}'.format(pep_gibbs_prob, pep_gauss_prob))
+        #print('pep_gibbs_prob is {} and pep_gauss_prob is {}'.format(pep_gibbs_prob, pep_gauss_prob))
         scaled_gibbs_prob = pep_gibbs_prob / self.biggest_gibbs
         scaled_gauss_prob = pep_gauss_prob / self.biggest_gauss
 
@@ -148,14 +150,17 @@ class Model:
                     pep_to_int_list(peptide), self.bg_dist, self.motif_dists,
                     motif_start=None, motif_class=i, num_motif_classes=self.NUM_MOTIF_CLASSES,
                     motif_length=self.MOTIF_LENGTH))
-        if not human:
+        if not human:#the antifouling set has no motifs
             most_likely_start = start_probs.index(max(start_probs))
             most_likely_motif_idx = motif_class_probs.index(max(motif_class_probs))
             most_likely_motif = self.motifs_list[most_likely_motif_idx]
             found_motif = peptide[most_likely_start:most_likely_start+self.MOTIF_LENGTH]
 
-            print('This model predicts that the motif class most likely shown in this peptide was {}'.format(most_likely_motif))
-            print('This model predicts the most likely motif position in this peptide was {} (motif: {})'.format(most_likely_motif_idx, found_motif))
+            retval['most_likely_motif'] = most_likely_motif
+            #print('This model predicts that the motif class most likely shown in this peptide was {}'.format(most_likely_motif))
+            #print('This model predicts the most likely motif position in this peptide was {} (motif: {})'.format(most_likely_motif_idx, found_motif))
+            retval['most_likely_motif_idx'] = most_likely_motif_idx
+            retval['found_motif'] = found_motif
 
         gibbs_contributes_more = True
 
@@ -167,11 +172,13 @@ class Model:
 
         weighted_tot_prob = weighted_gibbs_prob + weighted_gauss_prob
 
-        print('combined weighted prob is {:.4}.'.format(weighted_tot_prob))
+        print('weighted_gibbs_prob: {:.4}, weighted_gauss_prob: {:.4}.'.format(weighted_gibbs_prob, weighted_gauss_prob))
         if gibbs_contributes_more:
-            print('The QSPR half of the model contributed more of the likelihood than the motif half.')
+            print('The motif half of the model contributed more of the likelihood than the motif half.')
+            retval['qspr_contributes_more'] = False
         else:
-            print('The motif half of the model contributed more of the likelihood than the QSPR half.')
+            print('The QSPR half of the model contributed more of the likelihood than the QSPR half.')
+            retval['qspr_contributes_more'] = True
 
         if weighted_tot_prob >= self.opt_cutoff:
             positive = True
@@ -180,15 +187,32 @@ class Model:
 
         if not human:
             if positive:
-                print('This model ({}% accuracy) predicts that this peptide could be antimicrobial!'.format(self.opt_acc))
+                #print('This model ({}% accuracy) predicts that this peptide could be antimicrobial!'.format(self.opt_acc))
+                retval['predict'] = True
             else:
-                print('This model ({}% accuracy) predicts that this peptide is probably not antimicrobial.'.format(self.opt_acc))
+                #print('This model ({}% accuracy) predicts that this peptide is probably not antimicrobial.'.format(self.opt_acc))
+                retval['predict'] = False
         else:
             if positive:
-                print('This model ({}% accuracy) predicts that this peptide could be antifouling!'.format(self.opt_acc))
+                #print('This model ({}% accuracy) predicts that this peptide could be antifouling!'.format(self.opt_acc))
+                retval['predict'] = True
             else:
-                print('This model ({}% accuracy) predicts that this peptide is probably not antifouling.'.format(self.opt_acc))
-
+                #print('This model ({}% accuracy) predicts that this peptide is probably not antifouling.'.format(self.opt_acc))
+                retval['predict'] = False
+        return(retval)
+    def predict(self, peptide):
+        #first get antimicrobial prediction
+        self.setup(human = False)
+        self.read_data(human = False)
+        antimicrobial_predict = self.evaluate_peptide(peptide, human = False)
+        #now get antifouling prediction
+        self.setup(human = True)
+        self.read_data(human = True)
+        antifouling_predict = self.evaluate_peptide(peptide, human = True)
+        retval = {}
+        retval['antimicrobial'] = antimicrobial_predict
+        retval['antifouling'] = antifouling_predict
+        return(retval)
 
 
             
@@ -201,7 +225,12 @@ else:
     HUMAN = False
 
 if __name__ == '__main__':
-    model = Model(human = HUMAN)
-    model.evaluate_peptide(PEPTIDE, human = HUMAN)
-
+    model = Model(human = True)
+    #antifouling_predict = model.evaluate_peptide(PEPTIDE, human = True)
+    #model = Model(human = False)
+    #antimicrobial_predict = model.evaluate_peptide(PEPTIDE, human = False)
+    predict = model.predict(PEPTIDE)
+    print('Done evaluating.')
+    print('Antifouling: {}'.format(predict['antimicrobial']))
+    print('Antimicrobial: {}'.format(predict['antifouling']))
 

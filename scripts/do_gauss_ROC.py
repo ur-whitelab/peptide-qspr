@@ -4,6 +4,10 @@ from matplotlib import pyplot as plt
 import math
 import sys
 
+'''This file iterates over a specified lower and upper bound of Gaussian mixture cluster-numbers, 
+and calculates the ROC curve for each one, saving the resulting plots. It assumes the files
+ for each kernel number exist and are in the same directory!'''
+
 def printHelp():
     print("Usage: do_gauss_ROC.py [file_locations] [min_number_clusters] [max_number_clusters] [weight_for_FPR_dist]")
 

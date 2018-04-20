@@ -4,6 +4,9 @@ import sys
 import math
 from qspr_plots import *
 
+'''This script calculates ROC curves for the motif model. It assumes that the root directory
+is where the motif distributions are.'''
+
 def printhelp():
     print("Usage: do_gibbs_ROC.py [root_directory] [num_classes] [motif_length]")
     exit(1)

@@ -4,6 +4,9 @@ import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+'''This script takes in a distribution file specifying the length distribution of peptides
+ in some dataset, and makes random peptides with lengths drawn uniformly from the lengths given.'''
+
 ALPHABET = ['A','R','N','D','C','Q','E','G','H','I',
             'L','K','M','F','P','S','T','W','Y','V']
 

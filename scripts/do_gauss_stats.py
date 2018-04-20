@@ -1,7 +1,12 @@
-import numpy as np
+mport numpy as np
 from matplotlib import pyplot as plt
 import sys
 from qspr_plots import *
+
+'''This file iterates over a specified lower and upper bound of Gaussian mixture cluster-numbers, 
+and plots the FPR, TPR, and accuracy for each one. It assumes the files for each kernel
+ number exist and are in the same directory!'''
+
 
 def printHelp():
     print("Usage: do_stats.py [target_directory] [min_num_hills] [max_num_hills]")

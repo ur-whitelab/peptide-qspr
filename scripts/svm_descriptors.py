@@ -7,6 +7,10 @@ from sklearn.metrics import roc_curve
 from matplotlib import pyplot as plt
 import math
 
+'''This script takes in training data and runs both a house-made and  scikit-learn's linear SVM
+models on it, using up to all three of the keys used in the Gaussian mixture model. Plots
+ resultant ROC curves and reports accuracy.'''
+
 ETA = 1.0#the initial learning rate
 b = 0.0#The initial b value. Might as well start at 0
 C = 0.2#The C value. Small for small changes to b

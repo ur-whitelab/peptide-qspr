@@ -6,6 +6,8 @@ import math
 import copy
 from qspr_plots import *
 
+'''This script uses the trained models to find the most APD-like entries in our APD dataset.'''
+
 def printhelp():
     print("Usage: do_APD_human_likes.py [human_gaussians_directory] [num_gauss_clusters] [ROC_distance_weight] [APD_data_directory]")
     exit(1)

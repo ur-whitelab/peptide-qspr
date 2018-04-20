@@ -3,6 +3,12 @@ from matplotlib import pyplot as plt
 import sys
 import os
 
+'''This file iterates over a specified lower and upper bound of Gaussian mixture cluster-numbers, 
+and plots FPR, TPR, and accuracy for each one. It assumes the files for each kernel number
+ exist and are in the same directory!'''
+
+number of motif classes. Assumes all that class's data subdirs are in the same directory given.'''
+
 def printHelp():
     print("Usage: do_gibbs_stats.py [directory] [num_motifs] [min_motif_length] [max_motif_length] [HUMAN? (default: False)]\nInput 'HUMAN' as True if we're doing human datasets, otherwise defaults to doing gram+.")
     exit(1)

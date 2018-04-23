@@ -3,7 +3,6 @@ import re
 import math
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-import pdb
 import sys
 from qspr_plots import *
 

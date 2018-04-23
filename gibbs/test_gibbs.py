@@ -3,7 +3,6 @@ import re
 import math
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-import pdb
 import sys
 from qspr_plots import *
 
@@ -152,7 +151,6 @@ for _ in range(NRUNS):
         for i in range(len(motif_class_dists[key])):
             #motif_class_dists[key][i] += float(len(motif_class_dists[key][i]))
             motif_class_dists[key][i] /= np.sum(motif_class_dists[key][i])
-    #pdb.set_trace()
 
 
 #now get some fake data for performance analysis

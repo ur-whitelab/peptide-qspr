@@ -1,0 +1,16 @@
+numpy
+sys
+os
+math
+matplotlib
+random
+pandas
+copy
+pymc3
+sklearn
+theano
+re
+pdb
+scipy
+pkg_resources
+time

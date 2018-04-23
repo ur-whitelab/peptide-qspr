@@ -3,7 +3,6 @@ import re
 import math
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-import pdb
 import sys
 import os
 import libgibbs as lg

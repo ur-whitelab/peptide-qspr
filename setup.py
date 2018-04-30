@@ -14,9 +14,13 @@ setup(name='pymc3_qspr',
       description='QSPR Modelling with pymc3 and Bayesian Motif modelling',
       long_description=long_description,
       author='Rainier Barrett',
-      packages=['pymc3_qspr'],
+      packages=['evaluation', 'qspr_plots', ],
       install_requires=install_requires,
       entry_points=
       {
+          'evaluate_peptide':
+          [
+              'evaluate_peptide = evaluation.evaluate_peptide.__main__:main'
+          ]
       }
      )

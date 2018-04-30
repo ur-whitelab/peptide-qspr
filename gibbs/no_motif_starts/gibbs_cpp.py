@@ -58,7 +58,7 @@ def read_data(datafile):
     return(data, big_aa_list)
 
 
-apd_data, all_apd_aa  = read_data(INPUT)#('/home/rainier/pymc3_qspr/gibbs/control_peptides.txt')
+apd_data, all_apd_aa  = read_data(INPUT)
 
 #initialize the OVERALL distributions as uniform
 motif_dists = np.ones((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET))) / float(len(ALPHABET))

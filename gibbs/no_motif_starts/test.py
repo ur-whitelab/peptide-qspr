@@ -36,7 +36,7 @@ def pep_to_int_list(pep):
     '''takes a single string of amino acids and translates to a list of ints'''
     return(list(map(ALPHABET.index, pep)))
 
-apd_data, all_apd_aa  = read_data(INPUT)#('/home/rainier/pymc3_qspr/gibbs/control_peptides.txt')
+apd_data, all_apd_aa  = read_data(INPUT)
 
 #initialize the OVERALL distributions as uniform
 motif_dists = np.ones((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET))) / float(len(ALPHABET))

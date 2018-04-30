@@ -6,6 +6,9 @@ from matplotlib import pyplot as plt
 import sys
 from qspr_plots import *
 
+'''This is the non-C++ version of the C++ extension (i.e. Python only). This was used to ensure the
+C++ extension behaved as expected. Not recommended for use, as C++ version is much faser.'''
+
 def printhelp():
     print("Usage: test_gibbs.py [test_peptides_file] [num_classes] [num_iterations] [random_draws_per_step (default 0)]")
     exit(1)
@@ -49,7 +52,7 @@ def read_data(datafile):
     return(data, big_aa_list)
 
 
-apd_data, all_apd_aa  = read_data(INPUT)#('/home/rainier/pymc3_qspr/gibbs/control_peptides.txt')
+apd_data, all_apd_aa  = read_data(INPUT)
 
 #initialize the OVERALL distributions as uniform
 motif_dists = np.ones((NUM_MOTIF_CLASSES, MOTIF_LENGTH, len(ALPHABET))) / float(len(ALPHABET))

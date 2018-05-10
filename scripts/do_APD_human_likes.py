@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import sys
 import math
 import copy
-from qspr_plots import *
+from qspr_plots.qspr_plots import *
 
 '''This script uses the trained models to find the most APD-like entries in our APD dataset.'''
 

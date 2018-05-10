@@ -1,6 +1,0 @@
-qspr_plots.py
-qspr_plots.egg-info/PKG-INFO
-qspr_plots.egg-info/SOURCES.txt
-qspr_plots.egg-info/dependency_links.txt
-qspr_plots.egg-info/requires.txt
-qspr_plots.egg-info/top_level.txt

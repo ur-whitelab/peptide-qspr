@@ -1,26 +1,30 @@
 from distutils.core import setup
+from setuptools import setup,find_packages
 
 with open('README.md') as f:
-    long_description = ''.join(f.readlines())
+    desc = ''.join(f.readlines())
+
 
 # get the dependencies and installs
 with open('requirements.txt') as f:
     all_reqs = f.read().split('\n')
 
-install_requires = [x.strip() for x in all_reqs if 'git+' not in x]
+install_reqs = [x.strip() for x in all_reqs if 'git+' not in x]
 
-setup(name='pymc3_qspr',
-      version='0.01',
+setup(name='pymc3-qspr',
+      version='0.0.1',
       description='QSPR Modelling with pymc3 and Bayesian Motif modelling',
-      long_description=long_description,
+      long_description=desc,
       author='Rainier Barrett',
-      packages=['evaluation', 'qspr_plots', ],
-      install_requires=install_requires,
+      packages=find_packages(),
+      install_requires=install_reqs,
+      package_data = {'pymc3qspr.evaluation':['resources/*', 'resources/gibbs/*','resources/gauss/*','resources/human/*','resources/human/gibbs/*','resources/human/gauss/*']},
+      include_package_data=True,
       entry_points=
       {
-          'evaluate_peptide':
+          'console_scripts':
           [
-              'evaluate_peptide = evaluation.evaluate_peptide.__main__:main'
+              'evaluate-peptide=pymc3qspr.evaluation.evaluate_peptide:main'
           ]
       }
      )

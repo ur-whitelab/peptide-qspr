@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import sys
 import math
-from qspr_plots import *
+from qspr_plots.qspr_plots import *
 
 def printhelp():
     print("Usage: count_motifs.py [root_directory] [num_classes] [motif_length]")

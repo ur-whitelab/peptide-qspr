@@ -4,7 +4,7 @@ import math
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import sys
-from qspr_plots import *
+from qspr_plots.qspr_plots import *
 
 '''This is the non-C++ version of the C++ extension (i.e. Python only). This was used to ensure the
 C++ extension behaved as expected. Not recommended for use, as C++ version is much faser.'''

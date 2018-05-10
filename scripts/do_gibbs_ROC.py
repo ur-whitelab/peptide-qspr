@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import sys
 import math
-from qspr_plots import *
+from qspr_plots.qspr_plots import *
 
 '''This script calculates ROC curves for the motif model. It assumes that the root directory
 is where the motif distributions are.'''

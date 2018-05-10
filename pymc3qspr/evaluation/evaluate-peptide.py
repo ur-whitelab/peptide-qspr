@@ -2,7 +2,7 @@ from numpy import genfromtxt, ones
 from sys import argv
 from math import sqrt
 from scipy.stats import norm
-from qspr_plots import *
+from qspr_plots.qspr_plots import *
 import pkg_resources
 
 #python3 -i evaluate_peptide.py /home/rainier/pymc3_qspr/data/ /home/rainier/pymc3_qspr/data/gaussmix/gpos/only_3_descriptors/ 3 /home/rainier/pymc3_qspr/data/gibbs/with_starts/8_classes/gpos_8_classes_length_3/ 8 3 KLLKLLKLLKKLLLKLKLK
@@ -22,13 +22,13 @@ class Model:
     def read_data(self, human=False):
         self.quantile_means = {}
         self.quantile_vars ={}
-        with open(self.quantile_means_file) as f:
+        with open(self.quantile_means_file, 'r') as f:
             lines = f.readlines()
         for line in lines:
             key = line.split(',')[0]
             val = float(line.split(',')[1].replace('\n',''))
             self.quantile_means[key] = val
-        with open(self.quantile_vars_file) as f:
+        with open(self.quantile_vars_file, 'r') as f:
             lines = f.readlines()
         for line in lines:
             key = line.split(',')[0]
@@ -64,14 +64,14 @@ class Model:
         self.lowest_gibbs =  float(lines[7].split()[3].replace('\n',''))
         self.lowest_gauss =  float(lines[8].split()[3].replace('\n',''))
         self.opt_cutoff = float(lines[9].split()[3].replace('\n',''))
-
-        self.bg_dist = genfromtxt('{}/bg_dist.txt'.format(self.GIBBSDIR))
+        with open('{}/bg_dist.txt'.format(self.GIBBSDIR), 'r') as f:
+            self.bg_dist = genfromtxt(f)
         self.motif_dists = ones((self.NUM_MOTIF_CLASSES, self.MOTIF_LENGTH, len(ALPHABET))) / float(len(ALPHABET))
         for i in range(self.NUM_MOTIF_CLASSES):
             for j in range(self.MOTIF_LENGTH):
-                self.motif_dists[i][j] = genfromtxt(
-                    '{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(
-                        self.GIBBSDIR,i,self.NUM_MOTIF_CLASSES, j))
+                with open('{}/class_{}_of_{}_position_{}_motif_dist.txt'.format(
+                        self.GIBBSDIR,i,self.NUM_MOTIF_CLASSES, j), 'r') as f:
+                    self.motif_dists[i][j] = genfromtxt(f)
         if not human:
             with open(self.GIBBSDIR + '/motif_lists.txt', 'r') as f:
                 lines = f.readlines()
@@ -82,10 +82,10 @@ class Model:
         self.counts = {}
         self.bins = {}
         for key in self.keys:
-            self.counts[key] = genfromtxt(
-                '{}/{}_clusters_{}_observed.counts'.format(self.GAUSSDIR, self.NUM_CLUSTERS, key))
-            self.bins[key] = genfromtxt(
-                '{}/{}_clusters_{}_observed.bins'.format(self.GAUSSDIR, self.NUM_CLUSTERS, key))
+            with open('{}/{}_clusters_{}_observed.counts'.format(self.GAUSSDIR, self.NUM_CLUSTERS, key), 'r') as f:
+                self.counts[key] = genfromtxt(f)
+            with open('{}/{}_clusters_{}_observed.bins'.format(self.GAUSSDIR, self.NUM_CLUSTERS, key), 'r') as f:
+                self.bins[key] = genfromtxt(f)
             
     def setup(self, human = False):
         if not human:#for apd (default), use params for apd-trained model
@@ -103,8 +103,8 @@ class Model:
     
     def __init__(self, human = False):
         self.DATA_DIR = pkg_resources.resource_filename(__name__, 'resources/')
-        self.quantile_means_file = pkg_resources.resource_filename(__name__, self.DATA_DIR + '/baseline_means.csv')
-        self.quantile_vars_file = pkg_resources.resource_filename(__name__, self.DATA_DIR + '/baseline_vars.csv')
+        self.quantile_means_file = pkg_resources.resource_filename(__name__, 'resources/baseline_means.csv')
+        self.quantile_vars_file = pkg_resources.resource_filename(__name__, 'resources/baseline_vars.csv')
         self.keys = ['netCharge', 'nChargedGroups', 'nNonPolarGroups']#the 3 key descriptors
         self.setup(human = human)
         self.read_data(human = human)
@@ -218,13 +218,13 @@ class Model:
             
 
 
-PEPTIDE = argv[1]
-if len(argv) == 3:
-    HUMAN = bool(int(argv[2]))
-else:
-    HUMAN = False
 
-if __name__ == '__main__':
+def main():
+    PEPTIDE = argv[1]
+    if len(argv) == 3:
+        HUMAN = bool(int(argv[2]))
+    else:
+        HUMAN = False
     model = Model(human = True)
     #antifouling_predict = model.evaluate_peptide(PEPTIDE, human = True)
     #model = Model(human = False)
@@ -233,4 +233,8 @@ if __name__ == '__main__':
     print('Done evaluating.')
     print('Antifouling: {}'.format(predict['antimicrobial']))
     print('Antimicrobial: {}'.format(predict['antifouling']))
+
+    
+if __name__ == '__main__':
+    main()
 

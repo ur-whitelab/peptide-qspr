@@ -11,9 +11,6 @@ def printhelp():
     print('Usage: evaluate_peptide.py [peptide] [human (optional, default 0)]')
     exit(1)
 
-if len(argv) != 2 and len(argv) != 3:
-    printhelp()
-
 class Model:
     def to_quantile(self, x, n, mean, var):
         val = norm.pdf(x, loc=mean*n, scale = sqrt(n) * sqrt(var) )
@@ -220,6 +217,8 @@ class Model:
 
 
 def main():
+    if len(argv) != 2 and len(argv) != 3:
+        printhelp()
     PEPTIDE = argv[1]
     if len(argv) == 3:
         HUMAN = bool(int(argv[2]))
@@ -231,8 +230,8 @@ def main():
     #antimicrobial_predict = model.evaluate_peptide(PEPTIDE, human = False)
     predict = model.predict(PEPTIDE)
     print('Done evaluating.')
-    print('Antifouling: {}'.format(predict['antimicrobial']))
-    print('Antimicrobial: {}'.format(predict['antifouling']))
+    print('Antifouling: {}'.format(predict['antifouling']))
+    print('Antimicrobial: {}'.format(predict['antimicrobial']))
 
     
 if __name__ == '__main__':

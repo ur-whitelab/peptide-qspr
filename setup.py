@@ -11,20 +11,20 @@ with open('requirements.txt') as f:
 
 install_reqs = [x.strip() for x in all_reqs if 'git+' not in x]
 
-setup(name='pymc3-qspr',
+setup(name='peptide-qspr',
       version='0.0.1',
       description='QSPR Modelling with pymc3 and Bayesian Motif modelling',
       long_description=desc,
       author='Rainier Barrett',
       packages=find_packages(),
       install_requires=install_reqs,
-      package_data = {'pymc3qspr.evaluation':['resources/*', 'resources/gibbs/*','resources/gauss/*','resources/human/*','resources/human/gibbs/*','resources/human/gauss/*']},
+      package_data = {'peptideqspr.evaluation':['resources/*', 'resources/gibbs/*','resources/gauss/*','resources/human/*','resources/human/gibbs/*','resources/human/gauss/*']},
       include_package_data=True,
       entry_points=
       {
           'console_scripts':
           [
-              'evaluate-peptide=pymc3qspr.evaluation.evaluate_peptide:main'
+              'evaluate-peptide=peptideqspr.evaluation.evaluate_peptide:main',
           ]
       }
      )

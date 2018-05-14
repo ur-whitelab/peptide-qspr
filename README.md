@@ -1,4 +1,4 @@
-PYMC3_QSPR
+PEPTIDE-QSPR
 ====
 
 This is a Python package written to do both motif modeling and QSPR modeling of peptides,

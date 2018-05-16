@@ -25,6 +25,7 @@ setup(name='peptide-qspr',
           'console_scripts':
           [
               'evaluate-peptide=peptideqspr.evaluation.evaluate_peptide:main',
+              'train-gaussmix=peptideqspr.gaussmix.APD_multi_gaussmix:main'
           ]
       }
      )

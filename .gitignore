@@ -5,7 +5,6 @@
 **/plots
 **/data
 **/build
-**/gaussmix
 **/testing
 **/**/*.bins
 **/**/*.counts

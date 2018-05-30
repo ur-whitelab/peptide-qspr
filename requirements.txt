@@ -4,6 +4,5 @@ pandas
 pymc3
 sklearn
 theano
-pdb
 scipy
 

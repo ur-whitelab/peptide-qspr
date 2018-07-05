@@ -9,11 +9,11 @@ ENDIF()
 FIND_PACKAGE(Boost REQUIRED COMPONENTS python REQUIRED)
 FIND_PACKAGE(PythonLibs REQUIRED)
 IF(Boost_FOUND)
-  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS} "/usr/include/python3.5" "/usr/include/boost")
+  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS} "/usr/include/python3.6" "/usr/include/boost")
 #  SET(Boost_USE_STATIC_LIBS OFF)
   SET(Boost_USE_MULTITHREADED ON)
   SET(Boost_USE_STATIC_RUNTIME OFF)
-  FIND_PACKAGE(Boost 1.58.0 COMPONENTS python-py35 REQUIRED)
+  FIND_PACKAGE(Boost 1.58.0 COMPONENTS python-py36 REQUIRED)
 
   ADD_LIBRARY(gibbs SHARED gibbs_py.cxx gibbs_py.cpp)
   SET_TARGET_PROPERTIES(gibbs PROPERTIES COMPILE_FLAGS "-I${PROJECT_SOURCE_DIR} -I/usr/include/boost/python " LINK_FLAGS "-I${PROJECT_SOURCE_DIR} -I/usr/include/boost/python")#-O3 -march=native -funroll-loops

@@ -8,8 +8,8 @@
 **/testing
 **/**/*.bins
 !peptideqspr/evaluation/resources/**/*.bins
-!peptideqspr/evaluation/resources/**/*.counts
 **/**/*.counts
+!peptideqspr/evaluation/resources/**/*.counts
 raw_pdb.txt
 pdb_lengths.txt
 APD_GPOS_SEQS_txt.txt

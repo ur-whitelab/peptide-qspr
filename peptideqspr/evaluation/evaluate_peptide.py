@@ -2,7 +2,7 @@ from numpy import genfromtxt, ones
 from sys import argv
 from math import sqrt
 from scipy.stats import norm
-from qspr_plots.qspr_plots import *
+from peptideqspr.qspr_plots.qspr_plots import *
 import pkg_resources
 
 #example use as script:

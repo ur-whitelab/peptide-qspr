@@ -5,6 +5,8 @@ from scipy.stats import norm
 from qspr_plots.qspr_plots import *
 import pkg_resources
 
+#example use as script:
+
 #python3 -i evaluate_peptide.py /home/rainier/pymc3_qspr/data/ /home/rainier/pymc3_qspr/data/gaussmix/gpos/only_3_descriptors/ 3 /home/rainier/pymc3_qspr/data/gibbs/with_starts/8_classes/gpos_8_classes_length_3/ 8 3 KLLKLLKLLKKLLLKLKLK
 
 def printhelp():

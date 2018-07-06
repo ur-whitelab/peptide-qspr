@@ -7,6 +7,8 @@
 **/build
 **/testing
 **/**/*.bins
+!peptideqspr/evaluation/resources/**/*.bins
+!peptideqspr/evaluation/resources/**/*.counts
 **/**/*.counts
 raw_pdb.txt
 pdb_lengths.txt

@@ -130,7 +130,6 @@ class Model:
         pep_gauss_prob = prob
 
         pep_gibbs_prob = calc_prob(pep_to_int_list(peptide), self.bg_dist, self.motif_dists, num_motif_classes=self.NUM_MOTIF_CLASSES, motif_length=self.MOTIF_LENGTH)
-        #print('pep_gibbs_prob is {} and pep_gauss_prob is {}'.format(pep_gibbs_prob, pep_gauss_prob))
         scaled_gibbs_prob = pep_gibbs_prob / self.biggest_gibbs
         scaled_gauss_prob = pep_gauss_prob / self.biggest_gauss
 
@@ -154,11 +153,9 @@ class Model:
             most_likely_motif_idx = motif_class_probs.index(max(motif_class_probs))
             most_likely_motif = self.motifs_list[most_likely_motif_idx]
             found_motif = peptide[most_likely_start:most_likely_start+self.MOTIF_LENGTH]
-
             retval['most_likely_motif'] = most_likely_motif
-            #print('This model predicts that the motif class most likely shown in this peptide was {}'.format(most_likely_motif))
-            #print('This model predicts the most likely motif position in this peptide was {} (motif: {})'.format(most_likely_motif_idx, found_motif))
             retval['most_likely_motif_idx'] = most_likely_motif_idx
+            retval['most_likely_motif_start'] = most_likely_start
             retval['found_motif'] = found_motif
 
         gibbs_contributes_more = True
@@ -171,12 +168,9 @@ class Model:
 
         weighted_tot_prob = weighted_gibbs_prob + weighted_gauss_prob
 
-        print('weighted_gibbs_prob: {:.4}, weighted_gauss_prob: {:.4}.'.format(weighted_gibbs_prob, weighted_gauss_prob))
         if gibbs_contributes_more:
-            print('The motif half of the model contributed more of the likelihood than the motif half.')
             retval['qspr_contributes_more'] = False
         else:
-            print('The QSPR half of the model contributed more of the likelihood than the QSPR half.')
             retval['qspr_contributes_more'] = True
 
         if weighted_tot_prob >= self.opt_cutoff:
@@ -186,18 +180,15 @@ class Model:
 
         if not human:
             if positive:
-                #print('This model ({}% accuracy) predicts that this peptide could be antimicrobial!'.format(self.opt_acc))
                 retval['predict'] = True
             else:
-                #print('This model ({}% accuracy) predicts that this peptide is probably not antimicrobial.'.format(self.opt_acc))
                 retval['predict'] = False
         else:
             if positive:
-                #print('This model ({}% accuracy) predicts that this peptide could be antifouling!'.format(self.opt_acc))
                 retval['predict'] = True
             else:
-                #print('This model ({}% accuracy) predicts that this peptide is probably not antifouling.'.format(self.opt_acc))
                 retval['predict'] = False
+        retval['score'] = weighted_tot_prob / self.opt_cutoff
         return(retval)
     def predict(self, peptide):
         #first get antimicrobial prediction

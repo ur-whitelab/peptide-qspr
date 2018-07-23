@@ -160,8 +160,8 @@ class Model:
 
         gibbs_contributes_more = True
 
-        weighted_gibbs_prob = self.opt_motif_weight * max(pep_gibbs_prob - self.lowest_gibbs, 0.0) / self.biggest_gibbs
-        weighted_gauss_prob = self.opt_qspr_weight * max(pep_gauss_prob - self.lowest_gauss, 0.0) / self.biggest_gauss
+        weighted_gibbs_prob = self.opt_motif_weight * max(scaled_gibbs_prob - self.lowest_gibbs, 0.0) / self.biggest_gibbs
+        weighted_gauss_prob = self.opt_qspr_weight * max(scaled_gauss_prob - self.lowest_gauss, 0.0) / self.biggest_gauss
 
         if weighted_gauss_prob > weighted_gibbs_prob:
             gibbs_contributes_more = False
@@ -188,6 +188,7 @@ class Model:
                 retval['predict'] = True
             else:
                 retval['predict'] = False
+        print('The weighted_tot_prob for HUMAN={} was {}, and opt_cutoff was {}'.format(human, weighted_tot_prob, self.opt_cutoff))
         retval['score'] = weighted_tot_prob / self.opt_cutoff
         return(retval)
     def predict(self, peptide):

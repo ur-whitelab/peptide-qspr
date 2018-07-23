@@ -1,10 +1,10 @@
-Optimal TPR: 0.915
-Optimal FPR: 0.03409
-Optimal Accuracy: 0.9195
-Optimal Motif Weight: 0.02
-Optimal QSPR Weight: 0.98
+Optimal TPR: 0.9056
+Optimal FPR: 0.02841
+Optimal Accuracy: 0.9114
+Optimal Motif Weight: 0.4
+Optimal QSPR Weight: 0.6
 Biggest Gibbs Prob: 0.09797
 Biggest Gauss Prob: 0.4478
 Lowest Gibbs Prob: 0.02415
 Lowest Gauss Prob: 0.001914
-Optimal Best Cutoff: 0.1429
+Optimal Best Cutoff: 2.63

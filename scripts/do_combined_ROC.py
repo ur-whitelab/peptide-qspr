@@ -22,7 +22,7 @@ PREFACTOR = float(sys.argv[3])
 GIBBSDIR = sys.argv[4]
 NUM_MOTIF_CLASSES = int(sys.argv[5])
 MOTIF_LENGTH = int(sys.argv[6])
-DATA_DIR = '/home/rainier/pymc3_qspr/data/'
+DATA_DIR = '/home/rainier/peptideqspr/data/'
 TRAINFILE = GIBBSDIR+'/train_set.txt'
 TESTFILE = GIBBSDIR+'/test_set.txt'
 FAKEFILE = DATA_DIR + 'shorter_pdb_distributed_peps.out'
@@ -167,7 +167,7 @@ for i in range(len(weights)):
     best_fprs_arr[i] = fpr_arr[best_idx]
     best_tprs_arr[i] = tpr_arr[best_idx]
     best_accs_arr[i] = accuracy
-    if(accuracy >= optimal_acc and (weights[i] != 0 and weights[i] != 1.0)):
+    if(accuracy >= (max(best_accs_arr) - 0.01*max(best_accs_arr)) and (weights[i] != 0 and weights[i] != 1.0)):#within 1% to ignore too much noise and favor even weights
         optimal_acc = accuracy
         optimal_fpr_arr = copy.deepcopy(fpr_arr)
         optimal_tpr_arr = copy.deepcopy(tpr_arr)
